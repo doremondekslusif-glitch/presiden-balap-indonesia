@@ -1,9 +1,276 @@
 import * as THREE from 'three';
-export class Kart { constructor(character, isPlayer=false) { this.character=character;this.isPlayer=isPlayer;this.speed=0;this.heading=0;this.lap=0;this.progress=0;this.previousProgress=0;this.finished=false;this.boost=100;this.mesh=this.makeMesh(); }
- makeMesh(){const g=new THREE.Group(), body=new THREE.Mesh(new THREE.BoxGeometry(2.1,.5,3.2),new THREE.MeshStandardMaterial({color:this.character.color,roughness:.35,metalness:.2}));body.position.y=.55;g.add(body);const seat=new THREE.Mesh(new THREE.BoxGeometry(1.15,.65,1.1),new THREE.MeshStandardMaterial({color:0x1b2534}));seat.position.set(0,.95,.25);g.add(seat);const driver=new THREE.Mesh(new THREE.SphereGeometry(.48,12,9),new THREE.MeshStandardMaterial({color:0xf1bd91}));driver.position.set(0,1.5,.3);g.add(driver);for(const x of [-.86,.86])for(const z of [-1.05,1.05]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.28,10),new THREE.MeshStandardMaterial({color:0x16171b}));w.rotation.z=Math.PI/2;w.position.set(x,.38,z);g.add(w)}return g; }
- reset(pos, heading){this.mesh.position.copy(pos);this.heading=heading;this.mesh.rotation.y=heading;this.speed=0;this.lap=0;this.finished=false;}
- updatePlayer(dt,input,track){const accel=this.character.acceleration*22,max=30*this.character.speed;const forward=input.down('KeyW','ArrowUp'), backward=input.down('KeyS','ArrowDown'), boost=input.down('ShiftLeft','ShiftRight','Space')&&this.boost>0&&forward;if(forward)this.speed+=accel*dt;if(backward)this.speed-=accel*1.15*dt; if(!forward&&!backward)this.speed*=Math.pow(.55,dt);this.speed=Math.max(-9,Math.min(max+(boost?12:0),this.speed));if(boost){this.boost=Math.max(0,this.boost-31*dt)}else this.boost=Math.min(100,this.boost+10*dt);const steer=(input.down('KeyA','ArrowLeft')?1:0)-(input.down('KeyD','ArrowRight')?1:0);this.heading+=steer*dt*2.25*Math.min(1,Math.abs(this.speed)/9)*(this.speed>=0?1:-1)*this.character.handling;this.move(dt,track);}
- updateAI(dt,track,target){const to=target.clone().sub(this.mesh.position);const desired=Math.atan2(to.x,to.z);let delta=Math.atan2(Math.sin(desired-this.heading),Math.cos(desired-this.heading));this.heading+=Math.max(-1.7*dt,Math.min(1.7*dt,delta));this.speed=Math.min(25*this.character.speed,this.speed+15*dt);this.move(dt,track);}
- move(dt,track){const f=new THREE.Vector3(Math.sin(this.heading),0,Math.cos(this.heading));this.mesh.position.addScaledVector(f,this.speed*dt);const n=track.nearest(this.mesh.position);if(n.distance>track.spec.width*.57){this.mesh.position.copy(track.points[n.index]);this.speed*=.38;}this.mesh.rotation.y=this.heading;this.previousProgress=this.progress;this.progress=n.progress;if(this.previousProgress>.88&&this.progress<.12&&this.speed>2)this.lap++;}
- score(){return this.finished?9999+this.lap: this.lap+this.progress;}
+
+export class Kart {
+  constructor(character, isPlayer = false) {
+    this.character = character;
+    this.isPlayer = isPlayer;
+    this.speed = 0;
+    this.heading = 0;
+    this.lap = 0;
+    this.progress = 0;
+    this.previousProgress = 0;
+    this.finished = false;
+    this.boost = 100;
+    this.mesh = this.makeMesh();
+  }
+
+  makeMesh() {
+    const kart = new THREE.Group();
+
+    const paint = new THREE.MeshStandardMaterial({
+      color: this.character.color,
+      roughness: 0.28,
+      metalness: 0.25
+    });
+
+    const black = new THREE.MeshStandardMaterial({
+      color: 0x15171b,
+      roughness: 0.75
+    });
+
+    const skin = new THREE.MeshStandardMaterial({
+      color: 0xe8ae82
+    });
+
+    const shirt = new THREE.MeshStandardMaterial({
+      color: this.character.color
+    });
+
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(2.15, 0.42, 3.35),
+      paint
+    );
+    body.position.y = 0.62;
+    kart.add(body);
+
+    const nose = new THREE.Mesh(
+      new THREE.BoxGeometry(1.72, 0.28, 0.7),
+      paint
+    );
+    nose.position.set(0, 0.56, 1.88);
+    kart.add(nose);
+
+    const bumper = new THREE.Mesh(
+      new THREE.BoxGeometry(2.38, 0.16, 0.22),
+      black
+    );
+    bumper.position.set(0, 0.43, 2.23);
+    kart.add(bumper);
+
+    const spoiler = new THREE.Mesh(
+      new THREE.BoxGeometry(1.8, 0.16, 0.35),
+      paint
+    );
+    spoiler.position.set(0, 1.32, -1.5);
+    kart.add(spoiler);
+
+    for (const x of [-0.9, 0.9]) {
+      const post = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.7, 0.1),
+        black
+      );
+      post.position.set(x, 1.02, -1.43);
+      kart.add(post);
+    }
+
+    const seat = new THREE.Mesh(
+      new THREE.BoxGeometry(1.1, 0.66, 1.05),
+      black
+    );
+    seat.position.set(0, 1.0, -0.22);
+    kart.add(seat);
+
+    for (const x of [-0.92, 0.92]) {
+      for (const z of [-1.12, 1.18]) {
+        const wheel = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.38, 0.38, 0.3, 12),
+          black
+        );
+
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, 0.4, z);
+        wheel.userData.wheel = true;
+        kart.add(wheel);
+      }
+    }
+
+    const torso = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.34, 0.45, 0.8, 8),
+      shirt
+    );
+    torso.position.set(0, 1.55, -0.1);
+    kart.add(torso);
+
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.36, 10, 8),
+      skin
+    );
+    head.position.set(0, 2.2, -0.03);
+    kart.add(head);
+
+    const hair = new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.38,
+        10,
+        6,
+        0,
+        Math.PI * 2,
+        0,
+        Math.PI / 2
+      ),
+      black
+    );
+    hair.position.set(0, 2.28, -0.03);
+    kart.add(hair);
+
+    for (const x of [-0.38, 0.38]) {
+      const arm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.12, 0.65, 7),
+        skin
+      );
+      arm.position.set(x, 1.55, 0.36);
+      arm.rotation.z = x * 0.8;
+      kart.add(arm);
+
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.13, 0.16, 0.7, 7),
+        black
+      );
+      leg.position.set(x * 0.65, 1.0, 0.43);
+      leg.rotation.x = Math.PI / 2;
+      kart.add(leg);
+    }
+
+    const steering = new THREE.Mesh(
+      new THREE.TorusGeometry(0.3, 0.05, 7, 12),
+      black
+    );
+    steering.rotation.x = Math.PI / 2;
+    steering.position.set(0, 1.36, 0.62);
+    kart.add(steering);
+
+    return kart;
+  }
+
+  reset(pos, heading) {
+    this.mesh.position.copy(pos);
+    this.heading = heading;
+    this.mesh.rotation.y = heading;
+    this.speed = 0;
+    this.lap = 0;
+    this.finished = false;
+  }
+
+  updatePlayer(dt, input, track) {
+    const accel = this.character.acceleration * 22;
+    const max = 30 * this.character.speed;
+
+    const forward = input.down('KeyW', 'ArrowUp');
+    const backward = input.down('KeyS', 'ArrowDown');
+    const boost =
+      input.down('ShiftLeft', 'ShiftRight', 'Space') &&
+      this.boost > 0 &&
+      forward;
+
+    if (forward) {
+      this.speed += accel * dt;
+    }
+
+    if (backward) {
+      this.speed -= accel * 1.15 * dt;
+    }
+
+    if (!forward && !backward) {
+      this.speed *= Math.pow(0.55, dt);
+    }
+
+    this.speed = Math.max(
+      -9,
+      Math.min(max + (boost ? 12 : 0), this.speed)
+    );
+
+    if (boost) {
+      this.boost = Math.max(0, this.boost - 31 * dt);
+    } else {
+      this.boost = Math.min(100, this.boost + 10 * dt);
+    }
+
+    const steer =
+      (input.down('KeyA', 'ArrowLeft') ? 1 : 0) -
+      (input.down('KeyD', 'ArrowRight') ? 1 : 0);
+
+    this.heading +=
+      steer *
+      dt *
+      2.25 *
+      Math.min(1, Math.abs(this.speed) / 9) *
+      (this.speed >= 0 ? 1 : -1) *
+      this.character.handling;
+
+    this.move(dt, track);
+  }
+
+  updateAI(dt, track, target) {
+    const to = target.clone().sub(this.mesh.position);
+    const desired = Math.atan2(to.x, to.z);
+
+    let delta = Math.atan2(
+      Math.sin(desired - this.heading),
+      Math.cos(desired - this.heading)
+    );
+
+    this.heading += Math.max(
+      -1.7 * dt,
+      Math.min(1.7 * dt, delta)
+    );
+
+    this.speed = Math.min(
+      25 * this.character.speed,
+      this.speed + 15 * dt
+    );
+
+    this.move(dt, track);
+  }
+
+  move(dt, track) {
+    const f = new THREE.Vector3(
+      Math.sin(this.heading),
+      0,
+      Math.cos(this.heading)
+    );
+
+    this.mesh.position.addScaledVector(f, this.speed * dt);
+
+    const n = track.nearest(this.mesh.position);
+
+    if (n.distance > track.spec.width * 0.57) {
+      this.mesh.position.copy(track.points[n.index]);
+      this.speed *= 0.38;
+    }
+
+    this.mesh.rotation.y = this.heading;
+
+    this.mesh.traverse((o) => {
+      if (o.userData.wheel) {
+        o.rotation.y -= this.speed * dt * 2;
+      }
+    });
+
+    this.previousProgress = this.progress;
+    this.progress = n.progress;
+
+    if (
+      this.previousProgress > 0.88 &&
+      this.progress < 0.12 &&
+      this.speed > 2
+    ) {
+      this.lap++;
+    }
+  }
+
+  score() {
+    return this.finished
+      ? 9999 + this.lap
+      : this.lap + this.progress;
+  }
 }
