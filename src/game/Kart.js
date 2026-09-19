@@ -272,7 +272,7 @@ loadCharacterModel(kart, modelPath) {
         size.z
       );
 
-      const targetSize = 3.2;
+      const targetSize = 4.2;
 
       if (maxSize > 0) {
         const scale = targetSize / maxSize;
