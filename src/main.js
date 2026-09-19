@@ -146,8 +146,14 @@ function state(kind) {
 
 function createRace() {
   if (race) {
+    race.karts.forEach((kart) => {
+      scene.remove(kart.mesh);
+    });
+
     race = null;
   }
+
+  const roster = [
 
   const roster = [
     selectedCharacter,
