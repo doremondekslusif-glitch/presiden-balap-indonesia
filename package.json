@@ -1,0 +1,1 @@
+{"name":"presiden-balap-indonesia","version":"0.2.1","private":true,"type":"module","scripts":{"dev":"python3 -m http.server 5173 --directory .","build":"node scripts/build-static.mjs","preview":"python3 -m http.server 4173 --directory dist"}}
