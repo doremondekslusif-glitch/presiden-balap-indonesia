@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const gltfLoader = new GLTFLoader();
 
 export class Kart {
   constructor(character, isPlayer = false) {
@@ -28,20 +31,15 @@ export class Kart {
       roughness: 0.75
     });
 
-    const skin = new THREE.MeshStandardMaterial({
-      color: 0xe8ae82
-    });
-
-    const shirt = new THREE.MeshStandardMaterial({
-      color: this.character.color
-    });
-
+    // BADAN KART
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(2.15, 0.42, 3.35),
       paint
     );
 
     body.position.y = 0.62;
+    body.castShadow = true;
+    body.receiveShadow = true;
     kart.add(body);
 
     const nose = new THREE.Mesh(
@@ -86,10 +84,16 @@ export class Kart {
     seat.position.set(0, 1.0, -0.22);
     kart.add(seat);
 
+    // RODA
     for (const x of [-0.92, 0.92]) {
       for (const z of [-1.12, 1.18]) {
         const wheel = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.38, 0.38, 0.3, 12),
+          new THREE.CylinderGeometry(
+            0.38,
+            0.38,
+            0.3,
+            12
+          ),
           black
         );
 
@@ -101,8 +105,54 @@ export class Kart {
       }
     }
 
+    // STEERING
+    const steering = new THREE.Mesh(
+      new THREE.TorusGeometry(
+        0.3,
+        0.05,
+        7,
+        12
+      ),
+      black
+    );
+
+    steering.rotation.x = Math.PI / 2;
+    steering.position.set(0, 1.36, 0.62);
+    kart.add(steering);
+
+    /*
+     * Jika karakter mempunyai file GLB,
+     * gunakan GLB sebagai pengganti model
+     * kepala/tubuh generik.
+     */
+    if (this.character.model) {
+      this.loadCharacterModel(
+        kart,
+        this.character.model
+      );
+    } else {
+      this.addGenericCharacter(kart);
+    }
+
+    return kart;
+  }
+
+  addGenericCharacter(kart) {
+    const skin = new THREE.MeshStandardMaterial({
+      color: 0xe8ae82
+    });
+
+    const shirt = new THREE.MeshStandardMaterial({
+      color: this.character.color
+    });
+
     const torso = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.34, 0.45, 0.8, 8),
+      new THREE.CylinderGeometry(
+        0.34,
+        0.45,
+        0.8,
+        8
+      ),
       shirt
     );
 
@@ -110,11 +160,20 @@ export class Kart {
     kart.add(torso);
 
     const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.36, 10, 8),
+      new THREE.SphereGeometry(
+        0.36,
+        10,
+        8
+      ),
       skin
     );
 
-    head.position.set(0, 2.2, -0.03);
+    head.position.set(
+      0,
+      2.2,
+      -0.03
+    );
+
     kart.add(head);
 
     const hair = new THREE.Mesh(
@@ -127,42 +186,127 @@ export class Kart {
         0,
         Math.PI / 2
       ),
-      black
+      new THREE.MeshStandardMaterial({
+        color: 0x15171b
+      })
     );
 
-    hair.position.set(0, 2.28, -0.03);
+    hair.position.set(
+      0,
+      2.28,
+      -0.03
+    );
+
     kart.add(hair);
 
     for (const x of [-0.38, 0.38]) {
       const arm = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.1, 0.12, 0.65, 7),
+        new THREE.CylinderGeometry(
+          0.1,
+          0.12,
+          0.65,
+          7
+        ),
         skin
       );
 
-      arm.position.set(x, 1.55, 0.36);
-      arm.rotation.z = x * 0.8;
+      arm.position.set(
+        x,
+        1.55,
+        0.36
+      );
+
+      arm.rotation.z =
+        x * 0.8;
+
       kart.add(arm);
 
       const leg = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.13, 0.16, 0.7, 7),
-        black
+        new THREE.CylinderGeometry(
+          0.13,
+          0.16,
+          0.7,
+          7
+        ),
+        new THREE.MeshStandardMaterial({
+          color: 0x15171b
+        })
       );
 
-      leg.position.set(x * 0.65, 1.0, 0.43);
-      leg.rotation.x = Math.PI / 2;
+      leg.position.set(
+        x * 0.65,
+        1.0,
+        0.43
+      );
+
+      leg.rotation.x =
+        Math.PI / 2;
+
       kart.add(leg);
     }
+  }
 
-    const steering = new THREE.Mesh(
-      new THREE.TorusGeometry(0.3, 0.05, 7, 12),
-      black
+  loadCharacterModel(kart, modelPath) {
+    gltfLoader.load(
+      modelPath,
+
+      (gltf) => {
+        const model = gltf.scene;
+
+        /*
+         * Ukuran awal model.
+         *
+         * Kalau nanti terlalu besar/kecil,
+         * kita tinggal mengubah angka ini.
+         */
+        model.scale.set(
+          1,
+          1,
+          1
+        );
+
+        /*
+         * Posisi karakter di atas kursi.
+         */
+        model.position.set(
+          0,
+          0.65,
+          -0.25
+        );
+
+        /*
+         * Beberapa GLB menghadap arah
+         * yang berlawanan dengan arah kart.
+         */
+        model.rotation.y = Math.PI;
+
+        model.traverse((object) => {
+          if (object.isMesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+          }
+        });
+
+        model.userData.characterModel = true;
+
+        kart.add(model);
+      },
+
+      undefined,
+
+      (error) => {
+        console.error(
+          `Gagal memuat model karakter: ${modelPath}`,
+          error
+        );
+
+        /*
+         * Kalau GLB gagal dimuat,
+         * karakter generik tetap muncul.
+         */
+        this.addGenericCharacter(kart);
+      }
     );
-
-    steering.rotation.x = Math.PI / 2;
-    steering.position.set(0, 1.36, 0.62);
-    kart.add(steering);
-
-    return kart;
   }
 
   reset(pos, heading) {
@@ -178,27 +322,46 @@ export class Kart {
   }
 
   updatePlayer(dt, input, track) {
-    const accel = this.character.acceleration * 22;
-    const max = 30 * this.character.speed;
+    const accel =
+      this.character.acceleration * 22;
 
-    const forward = input.down('KeyW', 'ArrowUp');
-    const backward = input.down('KeyS', 'ArrowDown');
+    const max =
+      30 * this.character.speed;
+
+    const forward =
+      input.down(
+        'KeyW',
+        'ArrowUp'
+      );
+
+    const backward =
+      input.down(
+        'KeyS',
+        'ArrowDown'
+      );
 
     const boost =
-      input.down('ShiftLeft', 'ShiftRight', 'Space') &&
+      input.down(
+        'ShiftLeft',
+        'ShiftRight',
+        'Space'
+      ) &&
       this.boost > 0 &&
       forward;
 
     if (forward) {
-      this.speed += accel * dt;
+      this.speed +=
+        accel * dt;
     }
 
     if (backward) {
-      this.speed -= accel * 1.15 * dt;
+      this.speed -=
+        accel * 1.15 * dt;
     }
 
     if (!forward && !backward) {
-      this.speed *= Math.pow(0.55, dt);
+      this.speed *=
+        Math.pow(0.55, dt);
     }
 
     this.speed = Math.max(
@@ -222,15 +385,30 @@ export class Kart {
     }
 
     const steer =
-      (input.down('KeyA', 'ArrowLeft') ? 1 : 0) -
-      (input.down('KeyD', 'ArrowRight') ? 1 : 0);
+      (input.down(
+        'KeyA',
+        'ArrowLeft'
+      )
+        ? 1
+        : 0) -
+      (input.down(
+        'KeyD',
+        'ArrowRight'
+      )
+        ? 1
+        : 0);
 
     this.heading +=
       steer *
       dt *
       2.25 *
-      Math.min(1, Math.abs(this.speed) / 9) *
-      (this.speed >= 0 ? 1 : -1) *
+      Math.min(
+        1,
+        Math.abs(this.speed) / 9
+      ) *
+      (this.speed >= 0
+        ? 1
+        : -1) *
       this.character.handling;
 
     this.move(dt, track);
@@ -241,52 +419,61 @@ export class Kart {
       .clone()
       .sub(this.mesh.position);
 
-    const desired = Math.atan2(
-      to.x,
-      to.z
-    );
+    const desired =
+      Math.atan2(
+        to.x,
+        to.z
+      );
 
-    let delta = Math.atan2(
-      Math.sin(desired - this.heading),
-      Math.cos(desired - this.heading)
-    );
+    const delta =
+      Math.atan2(
+        Math.sin(
+          desired -
+            this.heading
+        ),
+        Math.cos(
+          desired -
+            this.heading
+        )
+      );
 
-    this.heading += Math.max(
-      -1.7 * dt,
-      Math.min(1.7 * dt, delta)
-    );
+    this.heading +=
+      Math.max(
+        -1.7 * dt,
+        Math.min(
+          1.7 * dt,
+          delta
+        )
+      );
 
     this.speed = Math.min(
-      25 * this.character.speed,
-      this.speed + 15 * dt
+      25 *
+        this.character.speed,
+      this.speed +
+        15 * dt
     );
 
     this.move(dt, track);
   }
 
   move(dt, track) {
-    const forward = new THREE.Vector3(
-      Math.sin(this.heading),
-      0,
-      Math.cos(this.heading)
-    );
+    const forward =
+      new THREE.Vector3(
+        Math.sin(this.heading),
+        0,
+        Math.cos(this.heading)
+      );
 
     this.mesh.position.addScaledVector(
       forward,
       this.speed * dt
     );
 
-    const nearest = track.nearest(
-      this.mesh.position
-    );
+    const nearest =
+      track.nearest(
+        this.mesh.position
+      );
 
-    /*
-     * Batas lintasan.
-     *
-     * Jika kart mulai keluar dari track,
-     * kart didorong kembali menuju sisi aman
-     * dan kecepatannya dikurangi.
-     */
     if (
       nearest.distance >
       track.spec.width * 0.52
@@ -296,25 +483,36 @@ export class Kart {
           nearest.progress
         );
 
-      const side = new THREE.Vector3(
-        -tangent.z,
-        0,
-        tangent.x
-      );
+      const side =
+        new THREE.Vector3(
+          -tangent.z,
+          0,
+          tangent.x
+        );
 
       const offset =
         this.mesh.position
           .clone()
-          .sub(track.points[nearest.index])
+          .sub(
+            track.points[
+              nearest.index
+            ]
+          )
           .dot(side);
 
       const safe =
-        Math.sign(offset || 1) *
+        Math.sign(
+          offset || 1
+        ) *
         track.spec.width *
         0.5;
 
       this.mesh.position
-        .copy(track.points[nearest.index])
+        .copy(
+          track.points[
+            nearest.index
+          ]
+        )
         .addScaledVector(
           side,
           safe
@@ -323,41 +521,53 @@ export class Kart {
       this.speed *= 0.48;
 
       this.heading +=
-        Math.sign(offset || 1) *
+        Math.sign(
+          offset || 1
+        ) *
         0.12;
     }
 
-    /*
-     * Jika kart sudah terlalu jauh dari
-     * lintasan, arahkan kembali secara halus.
-     */
     if (
       nearest.distance >
       track.spec.width * 1.1
     ) {
       this.mesh.position.lerp(
-        track.points[nearest.index],
+        track.points[
+          nearest.index
+        ],
         dt * 1.8
       );
 
       this.speed *= 0.75;
     }
 
-    this.mesh.rotation.y = this.heading;
+    this.mesh.rotation.y =
+      this.heading;
 
-    this.mesh.traverse((object) => {
-      if (object.userData.wheel) {
-        object.rotation.y -=
-          this.speed * dt * 2;
+    this.mesh.traverse(
+      (object) => {
+        if (
+          object.userData.wheel
+        ) {
+          object.rotation.y -=
+            this.speed *
+            dt *
+            2;
+        }
       }
-    });
+    );
 
-    this.previousProgress = this.progress;
-    this.progress = nearest.progress;
+    this.previousProgress =
+      this.progress;
+
+    this.progress =
+      nearest.progress;
 
     if (
-      this.previousProgress > 0.88 &&
-      this.progress < 0.12 &&
+      this.previousProgress >
+        0.88 &&
+      this.progress <
+        0.12 &&
       this.speed > 2
     ) {
       this.lap++;
@@ -367,6 +577,7 @@ export class Kart {
   score() {
     return this.finished
       ? 9999 + this.lap
-      : this.lap + this.progress;
+      : this.lap +
+          this.progress;
   }
 }
