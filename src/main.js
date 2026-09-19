@@ -154,8 +154,6 @@ function createRace() {
   }
 
   const roster = [
-
-  const roster = [
     selectedCharacter,
     ...characters.filter(
       (character) =>
