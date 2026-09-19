@@ -1,18 +1,18 @@
 /** Character roster is deliberately content-only so future political/fictitious guests need no gameplay rewrite. */
 export const characters = [
-  {
-    id: 'prabowo-subianto',
-    name: 'Prabowo Subianto',
-    category: 'Presiden RI',
-    avatar: '🇮🇩',
-kart: 'Garuda Merah Putih',
-model: './wowok.glb',
-color: 0xe63946,
-    speed: 1,
-    acceleration: 1,
-    handling: 1,
-    boost: 1
-  },
+{
+  id: 'prabowo-subianto',
+  name: 'Prabowo Subianto',
+  category: 'Presiden RI',
+  avatar: '🇮🇩',
+  kart: 'Garuda Merah Putih',
+  model: './wowok.glb',
+  color: 0xe63946,
+  speed: 1,
+  acceleration: 1,
+  handling: 1,
+  boost: 1
+},
   {
     id: 'sari-pantai',
     name: 'Sari Pantai',
