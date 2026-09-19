@@ -29,9 +29,11 @@ export class Track {
     const group = new THREE.Group();
     scene.add(group);
 
-    // =========================
+    const n = this.samples;
+
+    // =========================================
     // GROUND
-    // =========================
+    // =========================================
 
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(230, 190),
@@ -47,33 +49,33 @@ export class Track {
 
     group.add(ground);
 
-    // =========================
-    // ROAD
-    // =========================
-
-    const roadShape = new THREE.Shape();
-
-    const n = this.samples;
+    // =========================================
+    // TRACK EDGE POINTS
+    // =========================================
 
     const left = [];
     const right = [];
 
     for (let i = 0; i < n; i++) {
       const p = this.points[i];
-      const q =
-        this.points[(i + 1) % n];
 
-      const d = q
+      const q =
+        this.points[
+          (i + 1) % n
+        ];
+
+      const direction = q
         .clone()
         .sub(p)
         .normalize();
 
-      const side =
-        new THREE.Vector3(
-          -d.z,
-          0,
-          d.x
-        ).multiplyScalar(
+      const side = new THREE.Vector3(
+        -direction.z,
+        0,
+        direction.x
+      )
+        .normalize()
+        .multiplyScalar(
           this.spec.width / 2
         );
 
@@ -86,27 +88,34 @@ export class Track {
       );
     }
 
+    // =========================================
+    // ROAD
+    // =========================================
+
+    const roadShape = new THREE.Shape();
+
     roadShape.moveTo(
       left[0].x,
       left[0].z
     );
 
-    left.slice(1).forEach((p) => {
+    for (let i = 1; i < n; i++) {
       roadShape.lineTo(
-        p.x,
-        p.z
+        left[i].x,
+        left[i].z
       );
-    });
+    }
 
-    right
-      .slice()
-      .reverse()
-      .forEach((p) => {
-        roadShape.lineTo(
-          p.x,
-          p.z
-        );
-      });
+    for (
+      let i = n - 1;
+      i >= 0;
+      i--
+    ) {
+      roadShape.lineTo(
+        right[i].x,
+        right[i].z
+      );
+    }
 
     roadShape.closePath();
 
@@ -126,9 +135,9 @@ export class Track {
 
     group.add(road);
 
-    // =========================
+    // =========================================
     // EDGE MARKERS
-    // =========================
+    // =========================================
 
     const edgeMat =
       new THREE.MeshBasicMaterial({
@@ -140,7 +149,26 @@ export class Track {
       i < n;
       i += 4
     ) {
-      for (const arr of [
+      const p =
+        this.points[i];
+
+      const q =
+        this.points[
+          (i + 1) % n
+        ];
+
+      const direction = q
+        .clone()
+        .sub(p)
+        .normalize();
+
+      const rotation =
+        -Math.atan2(
+          direction.z,
+          direction.x
+        );
+
+      for (const edge of [
         left,
         right
       ]) {
@@ -155,30 +183,22 @@ export class Track {
           );
 
         marker.position.copy(
-          arr[i]
+          edge[i]
         );
 
-        marker.position.y = 0.06;
+        marker.position.y =
+          0.06;
 
         marker.rotation.y =
-          -Math.atan2(
-            this.points[
-              (i + 1) % n
-            ].z -
-              this.points[i].z,
-            this.points[
-              (i + 1) % n
-            ].x -
-              this.points[i].x
-          );
+          rotation;
 
         group.add(marker);
       }
     }
 
-    // =========================
-    // START LINE
-    // =========================
+    // =========================================
+    // START / FINISH LINE
+    // =========================================
 
     const start =
       this.points[0];
@@ -186,7 +206,7 @@ export class Track {
     const tangent =
       this.curve.getTangentAt(0);
 
-    const line =
+    const startLine =
       new THREE.Mesh(
         new THREE.BoxGeometry(
           this.spec.width,
@@ -198,49 +218,130 @@ export class Track {
         })
       );
 
-    line.position.copy(start);
-    line.position.y = 0.07;
+    startLine.position.copy(
+      start
+    );
 
-    line.rotation.y =
+    startLine.position.y =
+      0.07;
+
+    startLine.rotation.y =
       -Math.atan2(
         tangent.z,
         tangent.x
       );
 
-    group.add(line);
+    group.add(startLine);
 
-    // =========================
+    // =========================================
     // TRACK RAILS
-    // =========================
+    // =========================================
+
+    this.addRails(
+      group,
+      left,
+      right
+    );
+
+    // =========================================
+    // FINISH GATE
+    // =========================================
+
+    this.addFinishGate(
+      group,
+      start,
+      tangent
+    );
+
+    // =========================================
+    // BARRIERS
+    // =========================================
+
+    this.addBarriers(
+      group,
+      left,
+      right
+    );
+
+    // =========================================
+    // CONES
+    // =========================================
+
+    this.addCones(
+      group,
+      left,
+      right
+    );
+
+    // =========================================
+    // LIGHT POLES
+    // =========================================
+
+    this.addLightPoles(
+      group,
+      left,
+      right
+    );
+
+    // =========================================
+    // SIGNS
+    // =========================================
+
+    this.addSigns(
+      group,
+      left
+    );
+
+    // =========================================
+    // SCENERY
+    // =========================================
+
+    this.addScenery(group);
+  }
+
+  // =========================================
+  // RAILS
+  // =========================================
+
+  addRails(
+    group,
+    left,
+    right
+  ) {
+    const railMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0xb7bdc5,
+        roughness: 0.7
+      });
 
     for (
       let i = 0;
-      i < n;
-      i += 12
+      i < this.samples;
+      i += 8
     ) {
       const p =
         this.points[i];
 
       const q =
         this.points[
-          (i + 1) % n
+          (i + 1) %
+            this.samples
         ];
 
-      const d = q
+      const direction = q
         .clone()
         .sub(p)
         .normalize();
 
-      const side =
-        new THREE.Vector3(
-          -d.z,
-          0,
-          d.x
+      const rotation =
+        -Math.atan2(
+          direction.z,
+          direction.x
         );
 
-      for (const sign of [
-        -1,
-        1
+      for (const edge of [
+        left,
+        right
       ]) {
         const rail =
           new THREE.Mesh(
@@ -249,91 +350,27 @@ export class Track {
               0.45,
               3
             ),
-            new THREE.MeshStandardMaterial({
-              color: 0xb7bdc5
-            })
+            railMaterial
           );
 
-        rail.position
-          .copy(p)
-          .addScaledVector(
-            side,
-            sign *
-              (this.spec.width / 2 + 1)
-          );
+        rail.position.copy(
+          edge[i]
+        );
 
-        rail.position.y = 0.35;
+        rail.position.y =
+          0.35;
 
         rail.rotation.y =
-          -Math.atan2(
-            d.z,
-            d.x
-          );
+          rotation;
 
         group.add(rail);
       }
     }
-
-    // =========================
-    // START FINISH GATE
-    // =========================
-
-    this.addFinishGate(
-      group,
-      start,
-      tangent
-    );
-
-    // =========================
-    // TRACK BARRIERS
-    // =========================
-
-    this.addBarriers(
-      group,
-      left,
-      right
-    );
-
-    // =========================
-    // CONES
-    // =========================
-
-    this.addCones(
-      group,
-      left,
-      right
-    );
-
-    // =========================
-    // LIGHT POLES
-    // =========================
-
-    this.addLightPoles(
-      group,
-      left,
-      right
-    );
-
-    // =========================
-    // TRACK SIGNS
-    // =========================
-
-    this.addSigns(
-      group,
-      left,
-      right
-    );
-
-    // =========================
-    // SCENERY
-    // =========================
-
-    this.addScenery(group);
   }
 
-  // ==================================================
+  // =========================================
   // FINISH GATE
-  // ==================================================
+  // =========================================
 
   addFinishGate(
     group,
@@ -343,18 +380,15 @@ export class Track {
     const gate =
       new THREE.Group();
 
-    const angle =
-      Math.atan2(
-        tangent.x,
-        tangent.z
-      );
-
     gate.position.copy(
       position
     );
 
     gate.rotation.y =
-      angle;
+      Math.atan2(
+        tangent.x,
+        tangent.z
+      );
 
     const metal =
       new THREE.MeshStandardMaterial({
@@ -363,7 +397,7 @@ export class Track {
       });
 
     // Tiang kiri
-    const poleLeft =
+    const leftPole =
       new THREE.Mesh(
         new THREE.BoxGeometry(
           0.45,
@@ -373,24 +407,24 @@ export class Track {
         metal
       );
 
-    poleLeft.position.set(
+    leftPole.position.set(
       -(this.spec.width / 2),
       2.75,
       0
     );
 
-    gate.add(poleLeft);
+    gate.add(leftPole);
 
     // Tiang kanan
-    const poleRight =
-      poleLeft.clone();
+    const rightPole =
+      leftPole.clone();
 
-    poleRight.position.x =
+    rightPole.position.x =
       this.spec.width / 2;
 
-    gate.add(poleRight);
+    gate.add(rightPole);
 
-    // Atap
+    // Bagian atas
     const top =
       new THREE.Mesh(
         new THREE.BoxGeometry(
@@ -401,7 +435,8 @@ export class Track {
         metal
       );
 
-    top.position.y = 5.5;
+    top.position.y =
+      5.5;
 
     gate.add(top);
 
@@ -419,11 +454,12 @@ export class Track {
         })
       );
 
-    banner.position.y = 4.55;
+    banner.position.y =
+      4.55;
 
     gate.add(banner);
 
-    // Kotak putih di banner
+    // Kotak hitam putih
     for (
       let i = -3;
       i <= 3;
@@ -456,22 +492,22 @@ export class Track {
     group.add(gate);
   }
 
-  // ==================================================
+  // =========================================
   // BARRIERS
-  // ==================================================
+  // =========================================
 
   addBarriers(
     group,
     left,
     right
   ) {
-    const barrierMat =
+    const barrierMaterial =
       new THREE.MeshStandardMaterial({
         color: 0xd9dce0,
         roughness: 0.8
       });
 
-    const redMat =
+    const stripeMaterial =
       new THREE.MeshStandardMaterial({
         color: 0xd92332
       });
@@ -479,43 +515,43 @@ export class Track {
     for (
       let i = 6;
       i < this.samples;
-      i += 10
+      i += 8
     ) {
-      for (const data of [
-        {
-          arr: left,
-          side: 1
-        },
-        {
-          arr: right,
-          side: -1
-        }
+      const p =
+        this.points[i];
+
+      const q =
+        this.points[
+          (i + 1) %
+            this.samples
+        ];
+
+      const direction = q
+        .clone()
+        .sub(p)
+        .normalize();
+
+      const rotation =
+        -Math.atan2(
+          direction.z,
+          direction.x
+        );
+
+      for (const edge of [
+        left,
+        right
       ]) {
-        const p =
-          data.arr[i];
-
-        const q =
-          data.arr[
-            (i + 1) %
-              this.samples
-          ];
-
-        const d = q
-          .clone()
-          .sub(p)
-          .normalize();
-
         const barrier =
           new THREE.Group();
 
         const base =
           new THREE.Mesh(
             new THREE.BoxGeometry(
-              2.8,
+              2.6,
               0.65,
               0.55
             ),
-            barrierMat
+            barrierMaterial
           );
 
         barrier.add(base);
@@ -523,11 +559,11 @@ export class Track {
         const stripe =
           new THREE.Mesh(
             new THREE.BoxGeometry(
-              2.8,
-              0.18,
+              2.6,
+              0.16,
               0.57
             ),
-            redMat
+            stripeMaterial
           );
 
         stripe.position.y =
@@ -536,33 +572,30 @@ export class Track {
         barrier.add(stripe);
 
         barrier.position.copy(
-          p
+          edge[i]
         );
 
         barrier.position.y =
           0.33;
 
         barrier.rotation.y =
-          -Math.atan2(
-            d.z,
-            d.x
-          );
+          rotation;
 
         group.add(barrier);
       }
     }
   }
 
-  // ==================================================
+  // =========================================
   // CONES
-  // ==================================================
+  // =========================================
 
   addCones(
     group,
     left,
     right
   ) {
-    const orange =
+    const coneMaterial =
       new THREE.MeshStandardMaterial({
         color: 0xff6b00
       });
@@ -572,13 +605,10 @@ export class Track {
       i < this.samples;
       i += 35
     ) {
-      const arr =
+      const edge =
         i % 70 === 15
           ? left
           : right;
-
-      const p =
-        arr[i];
 
       const cone =
         new THREE.Mesh(
@@ -587,11 +617,11 @@ export class Track {
             0.8,
             8
           ),
-          orange
+          coneMaterial
         );
 
       cone.position.copy(
-        p
+        edge[i]
       );
 
       cone.position.y =
@@ -601,21 +631,21 @@ export class Track {
     }
   }
 
-  // ==================================================
+  // =========================================
   // LIGHT POLES
-  // ==================================================
+  // =========================================
 
   addLightPoles(
     group,
     left,
     right
   ) {
-    const poleMat =
+    const poleMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x45484d
       });
 
-    const lightMat =
+    const lightMaterial =
       new THREE.MeshBasicMaterial({
         color: 0xffffcc
       });
@@ -625,15 +655,12 @@ export class Track {
       i < this.samples;
       i += 40
     ) {
-      const arr =
+      const edge =
         i % 80 === 20
           ? left
           : right;
 
-      const p =
-        arr[i];
-
-      const pole =
+      const poleGroup =
         new THREE.Group();
 
       const shaft =
@@ -644,13 +671,13 @@ export class Track {
             4.5,
             8
           ),
-          poleMat
+          poleMaterial
         );
 
       shaft.position.y =
         2.25;
 
-      pole.add(shaft);
+      poleGroup.add(shaft);
 
       const lamp =
         new THREE.Mesh(
@@ -659,37 +686,36 @@ export class Track {
             0.22,
             0.35
           ),
-          lightMat
+          lightMaterial
         );
 
       lamp.position.y =
         4.5;
 
-      pole.add(lamp);
+      poleGroup.add(lamp);
 
-      pole.position.copy(
-        p
+      poleGroup.position.copy(
+        edge[i]
       );
 
-      group.add(pole);
+      group.add(poleGroup);
     }
   }
 
-  // ==================================================
+  // =========================================
   // SIGNS
-  // ==================================================
+  // =========================================
 
   addSigns(
     group,
-    left,
-    right
+    left
   ) {
-    const poleMat =
+    const poleMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x55585c
       });
 
-    const signMat =
+    const signMaterial =
       new THREE.MeshStandardMaterial({
         color: 0xffffff
       });
@@ -710,7 +736,7 @@ export class Track {
             2.3,
             8
           ),
-          poleMat
+          poleMaterial
         );
 
       pole.position.copy(
@@ -729,7 +755,7 @@ export class Track {
             0.9,
             0.12
           ),
-          signMat
+          signMaterial
         );
 
       sign.position.copy(
@@ -743,46 +769,48 @@ export class Track {
     }
   }
 
-  // ==================================================
+  // =========================================
   // SCENERY
-  // ==================================================
+  // =========================================
 
   addScenery(group) {
-    const trunk =
+    const trunkMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x765238
       });
 
-    const leaf =
+    const leafMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x167a42
       });
 
-    const rice =
+    const riceMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x8bba45
       });
 
-    // Pohon di area luar
+    // Pohon
     for (
       let i = 0;
       i < 52;
       i++
     ) {
-      const a =
+      const angle =
         i * 2.399;
 
-      const r =
+      const radius =
         54 +
         (i % 5) * 7;
 
       const x =
-        Math.cos(a) * r;
+        Math.cos(angle) *
+        radius;
 
       const z =
-        Math.sin(a) * r;
+        Math.sin(angle) *
+        radius;
 
-      const t =
+      const trunk =
         new THREE.Mesh(
           new THREE.CylinderGeometry(
             0.35,
@@ -790,16 +818,16 @@ export class Track {
             4,
             7
           ),
-          trunk
+          trunkMaterial
         );
 
-      t.position.set(
+      trunk.position.set(
         x,
         2,
         z
       );
 
-      group.add(t);
+      group.add(trunk);
 
       const crown =
         new THREE.Mesh(
@@ -808,7 +836,7 @@ export class Track {
             5,
             8
           ),
-          leaf
+          leafMaterial
         );
 
       crown.position.set(
@@ -838,7 +866,7 @@ export class Track {
               0.08,
               3.6
             ),
-            rice
+            riceMaterial
           );
 
         patch.position.set(
@@ -898,9 +926,9 @@ export class Track {
     group.add(mountain);
   }
 
-  // ==================================================
+  // =========================================
   // NEAREST
-  // ==================================================
+  // =========================================
 
   nearest(position) {
     let best = 0;
@@ -908,13 +936,13 @@ export class Track {
 
     this.points.forEach(
       (p, i) => {
-        const v =
+        const distance =
           p.distanceToSquared(
             position
           );
 
-        if (v < d) {
-          d = v;
+        if (distance < d) {
+          d = distance;
           best = i;
         }
       }
@@ -924,14 +952,13 @@ export class Track {
       index: best,
       distance: Math.sqrt(d),
       progress:
-        best /
-        this.samples
+        best / this.samples
     };
   }
 
-  // ==================================================
+  // =========================================
   // POINT
-  // ==================================================
+  // =========================================
 
   point(progress) {
     return this.curve.getPointAt(
