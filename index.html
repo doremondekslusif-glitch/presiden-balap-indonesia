@@ -2,141 +2,482 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Presiden Balap Indonesia — Bali Circuit</title>
-  <link rel="stylesheet" href="./src/style.css"/>
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1.0"
+  />
+
+  <title>
+    Presiden Balap Indonesia — Bali Circuit
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="./src/style.css"
+  />
 </head>
 
 <body>
   <main id="app">
 
-    <!-- HUD BALAP -->
+    <!-- =========================
+         HUD BALAP
+    ========================== -->
     <div id="hud" class="hud hidden">
+
       <section class="race-card position">
         <span>POSISI</span>
-        <strong id="position">1<small>/4</small></strong>
-        <b id="racer-name">Garuda Muda</b>
+
+        <strong id="position">
+          1<small>/4</small>
+        </strong>
+
+        <b id="racer-name">
+          Garuda Muda
+        </b>
       </section>
+
 
       <section class="race-card timing">
         <span>WAKTU</span>
-        <strong id="timer">00:00.000</strong>
-        <b id="lap">LAP 1/3</b>
+
+        <strong id="timer">
+          00:00.000
+        </strong>
+
+        <b id="lap">
+          LAP 1/3
+        </b>
       </section>
 
+
       <section class="speed">
-        <span id="speed">000</span>
-        <small>KM/H</small>
+        <span id="speed">
+          000
+        </span>
+
+        <small>
+          KM/H
+        </small>
 
         <div class="boost">
           <i id="boost-fill"></i>
-          <b>BOOST</b>
+
+          <b>
+            BOOST
+          </b>
         </div>
       </section>
 
+
       <section class="minimap">
-        <canvas id="map" width="170" height="130"></canvas>
-        <b>BALI CIRCUIT</b>
+        <canvas
+          id="map"
+          width="170"
+          height="130">
+        </canvas>
+
+        <b>
+          BALI CIRCUIT
+        </b>
       </section>
 
+
       <div id="countdown" class="countdown"></div>
+
     </div>
 
-    <!-- HOME / MAIN MENU -->
-    <section id="menu" class="screen">
+
+    <!-- =========================
+         HOME / MAIN MENU
+    ========================== -->
+    <section
+      id="menu"
+      class="screen">
+
       <div class="panel">
-        <p class="eyebrow">SELAMAT DATANG DI</p>
+
+        <p class="eyebrow">
+          SELAMAT DATANG DI
+        </p>
 
         <h1>
           PRESIDEN<br/>
-          <em>BALAP INDONESIA</em>
+          <em>
+            BALAP INDONESIA
+          </em>
         </h1>
 
         <p class="sub">
           Bali Circuit · 3D arcade racing
         </p>
 
+
         <div class="controls">
-          <b>KEMUDI</b>
-          <span>WASD / Tombol Panah</span>
 
-          <b>BOOST</b>
-          <span>Shift atau Spasi</span>
+          <b>
+            KEMUDI
+          </b>
 
-          <b>REM / MUNDUR</b>
-          <span>S / Panah Bawah</span>
+          <span>
+            WASD / Tombol Panah
+          </span>
+
+
+          <b>
+            BOOST
+          </b>
+
+          <span>
+            Shift atau Spasi
+          </span>
+
+
+          <b>
+            REM / MUNDUR
+          </b>
+
+          <span>
+            S / Panah Bawah
+          </span>
+
         </div>
 
+
         <div class="menu-actions">
+
           <button id="start">
             MULAI BALAP
           </button>
 
-          <button id="choose-character" class="secondary">
+
+          <button
+            id="choose-character"
+            class="secondary">
+
             PILIH KARAKTER
+
           </button>
 
-          <button id="choose-circuit" class="secondary">
+
+          <button
+            id="choose-circuit"
+            class="secondary">
+
             PILIH SIRKUIT
+
           </button>
 
-          <button id="settings" class="secondary">
+
+          <button
+            id="settings"
+            class="secondary">
+
             PENGATURAN
+
           </button>
-        </div>
-      </div>
-    </section>
 
-    <!-- CHARACTER SELECT -->
-    <section id="character-select" class="screen hidden">
-      <div class="panel">
-        <p class="eyebrow">PILIH PEMBALAP</p>
-
-        <h2>KARAKTER</h2>
-
-        <div
-          id="character-cards"
-          class="character-cards">
         </div>
 
-        <button
-          id="character-back"
-          class="secondary">
-          KEMBALI
-        </button>
       </div>
+
     </section>
 
-    <!-- RESULT -->
-    <section id="results" class="screen hidden">
+
+    <!-- =========================
+         CHARACTER SELECT
+    ========================== -->
+    <section
+      id="character-select"
+      class="screen hidden">
+
+      <div class="character-select-panel">
+
+        <!-- HEADER -->
+        <div class="character-header">
+
+          <p class="eyebrow">
+            PILIH PEMBALAP
+          </p>
+
+          <h2>
+            KARAKTER
+          </h2>
+
+          <p class="character-description">
+            Pilih karakter yang akan kamu gunakan
+            dalam balapan.
+          </p>
+
+        </div>
+
+
+        <!-- CONTENT -->
+        <div class="character-select-content">
+
+
+          <!-- =====================
+               PREVIEW 3D
+          ====================== -->
+          <div class="character-preview">
+
+            <div
+              id="character-preview"
+              class="character-preview-model">
+
+              <!--
+                Preview model 3D akan
+                dibuat oleh JavaScript.
+              -->
+
+            </div>
+
+
+            <div class="preview-shadow"></div>
+
+          </div>
+
+
+          <!-- =====================
+               INFORMATION
+          ====================== -->
+          <div class="character-info">
+
+            <div class="character-info-top">
+
+              <span
+                id="selected-character-avatar"
+                class="character-avatar">
+
+                🇮🇩
+
+              </span>
+
+
+              <div>
+
+                <h3 id="selected-character-name">
+                  Prabowo Subianto
+                </h3>
+
+                <p id="selected-character-category">
+                  Presiden RI
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <!-- KART -->
+            <div class="character-kart">
+
+              <span>
+                KART
+              </span>
+
+              <strong id="selected-character-kart">
+                Garuda Merah Putih
+              </strong>
+
+            </div>
+
+
+            <!-- STATS -->
+            <div class="character-stats">
+
+              <div class="stat">
+
+                <div class="stat-label">
+                  <span>
+                    SPEED
+                  </span>
+
+                  <strong id="stat-speed">
+                    1.00
+                  </strong>
+                </div>
+
+                <div class="stat-bar">
+                  <i
+                    id="stat-speed-bar"
+                    style="width: 70%">
+                  </i>
+                </div>
+
+              </div>
+
+
+              <div class="stat">
+
+                <div class="stat-label">
+
+                  <span>
+                    ACCELERATION
+                  </span>
+
+                  <strong id="stat-acceleration">
+                    1.00
+                  </strong>
+
+                </div>
+
+                <div class="stat-bar">
+
+                  <i
+                    id="stat-acceleration-bar"
+                    style="width: 70%">
+                  </i>
+
+                </div>
+
+              </div>
+
+
+              <div class="stat">
+
+                <div class="stat-label">
+
+                  <span>
+                    HANDLING
+                  </span>
+
+                  <strong id="stat-handling">
+                    1.00
+                  </strong>
+
+                </div>
+
+                <div class="stat-bar">
+
+                  <i
+                    id="stat-handling-bar"
+                    style="width: 70%">
+                  </i>
+
+                </div>
+
+              </div>
+
+
+              <div class="stat">
+
+                <div class="stat-label">
+
+                  <span>
+                    BOOST
+                  </span>
+
+                  <strong id="stat-boost">
+                    1.00
+                  </strong>
+
+                </div>
+
+                <div class="stat-bar">
+
+                  <i
+                    id="stat-boost-bar"
+                    style="width: 70%">
+                  </i>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <!-- CHARACTER LIST -->
+            <div
+              id="character-cards"
+              class="character-cards">
+            </div>
+
+
+            <!-- ACTION -->
+            <div class="character-actions">
+
+              <button
+                id="character-confirm">
+
+                PILIH KARAKTER
+
+              </button>
+
+
+              <button
+                id="character-back"
+                class="secondary">
+
+                KEMBALI
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         RESULT
+    ========================== -->
+    <section
+      id="results"
+      class="screen hidden">
+
       <div class="panel results">
-        <p class="eyebrow">BALAPAN SELESAI</p>
 
-        <h2>HASIL BALI CIRCUIT</h2>
+        <p class="eyebrow">
+          BALAPAN SELESAI
+        </p>
+
+        <h2>
+          HASIL BALI CIRCUIT
+        </h2>
 
         <ol id="result-list"></ol>
+
 
         <button id="restart">
           BALAP LAGI
         </button>
+
       </div>
+
     </section>
 
   </main>
 
-  <!-- THREE.JS -->
-<script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+
+  <!-- =========================
+       THREE.JS
+  ========================== -->
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
     }
-  }
-</script>
+  </script>
+
+
+  <!-- =========================
+       GAME JAVASCRIPT
+  ========================== -->
 
   <script
     type="module"
     src="./src/main.js">
   </script>
+
 </body>
 </html>
