@@ -257,35 +257,38 @@ loadCharacterModel(kart, modelPath) {
 
       const model = gltf.scene;
 
-      // Hitung ukuran asli model
+      // Hitung ukuran model asli
       const box = new THREE.Box3().setFromObject(model);
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
 
-      console.log('UKURAN MODEL:', size);
-      console.log('CENTER MODEL:', center);
-
       // Pusatkan model
       model.position.sub(center);
 
-      // Normalisasi ukuran model
+      // BESARKAN MODEL
       const maxSize = Math.max(
         size.x,
         size.y,
         size.z
       );
 
-      const targetHeight = 2.2;
+      const targetSize = 3.2;
 
       if (maxSize > 0) {
-        const scale = targetHeight / maxSize;
+        const scale = targetSize / maxSize;
         model.scale.setScalar(scale);
       }
 
-      // Tempatkan di atas kart
-      model.position.y = 0.65;
+      // Posisi karakter di atas kart
+      model.position.set(
+        0,
+        0.75,
+        -0.25
+      );
 
-      model.rotation.y = Math.PI;
+      // ARAH MODEL
+      // Coba ini terlebih dahulu
+      model.rotation.y = 0;
 
       model.traverse((object) => {
         if (object.isMesh) {
@@ -305,16 +308,7 @@ loadCharacterModel(kart, modelPath) {
       console.log('MODEL DITEMPEL KE KART');
     },
 
-    (progress) => {
-      if (progress.total > 0) {
-        console.log(
-          'LOAD:',
-          Math.round(
-            (progress.loaded / progress.total) * 100
-          ) + '%'
-        );
-      }
-    },
+    undefined,
 
     (error) => {
       console.error(
@@ -327,7 +321,6 @@ loadCharacterModel(kart, modelPath) {
     }
   );
 }
-
   reset(pos, heading) {
     this.mesh.position.copy(pos);
     this.heading = heading;
