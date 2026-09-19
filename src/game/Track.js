@@ -3,16 +3,20 @@ import * as THREE from 'three';
 export class Track {
   constructor(scene, spec) {
     this.spec = spec;
+
     this.curve = new THREE.CatmullRomCurve3(
       spec.points.map((p) => new THREE.Vector3(...p)),
       true,
       'centripetal'
     );
+
     this.samples = 240;
+
     this.points = Array.from(
       { length: this.samples },
       (_, i) => this.curve.getPointAt(i / this.samples)
     );
+
     this.build(scene);
   }
 
@@ -43,14 +47,21 @@ export class Track {
       const q = this.points[(i + 1) % n];
 
       const d = q.clone().sub(p).normalize();
-      const side = new THREE.Vector3(-d.z, 0, d.x)
-        .multiplyScalar(this.spec.width / 2);
+
+      const side = new THREE.Vector3(
+        -d.z,
+        0,
+        d.x
+      ).multiplyScalar(this.spec.width / 2);
 
       left.push(p.clone().add(side));
       right.push(p.clone().sub(side));
     }
 
-    roadShape.moveTo(left[0].x, left[0].z);
+    roadShape.moveTo(
+      left[0].x,
+      left[0].z
+    );
 
     left.slice(1).forEach((p) => {
       roadShape.lineTo(p.x, p.z);
@@ -82,7 +93,11 @@ export class Track {
     for (let i = 0; i < n; i += 4) {
       for (const arr of [left, right]) {
         const marker = new THREE.Mesh(
-          new THREE.BoxGeometry(0.45, 0.05, 1.4),
+          new THREE.BoxGeometry(
+            0.45,
+            0.05,
+            1.4
+          ),
           edgeMat
         );
 
@@ -90,8 +105,10 @@ export class Track {
         marker.position.y = 0.06;
 
         marker.rotation.y = -Math.atan2(
-          this.points[(i + 1) % n].z - this.points[i].z,
-          this.points[(i + 1) % n].x - this.points[i].x
+          this.points[(i + 1) % n].z -
+            this.points[i].z,
+          this.points[(i + 1) % n].x -
+            this.points[i].x
         );
 
         group.add(marker);
@@ -103,7 +120,11 @@ export class Track {
     const tangent = this.curve.getTangentAt(0);
 
     const line = new THREE.Mesh(
-      new THREE.BoxGeometry(this.spec.width, 0.05, 1),
+      new THREE.BoxGeometry(
+        this.spec.width,
+        0.05,
+        1
+      ),
       new THREE.MeshBasicMaterial({
         color: 0xffffff
       })
@@ -111,7 +132,12 @@ export class Track {
 
     line.position.copy(start);
     line.position.y = 0.07;
-    line.rotation.y = -Math.atan2(tangent.z, tangent.x);
+
+    line.rotation.y = -Math.atan2(
+      tangent.z,
+      tangent.x
+    );
+
     group.add(line);
 
     // Track rails
@@ -120,23 +146,39 @@ export class Track {
       const q = this.points[(i + 1) % n];
 
       const d = q.clone().sub(p).normalize();
-      const side = new THREE.Vector3(-d.z, 0, d.x);
+
+      const side = new THREE.Vector3(
+        -d.z,
+        0,
+        d.x
+      );
 
       for (const sign of [-1, 1]) {
         const rail = new THREE.Mesh(
-          new THREE.BoxGeometry(0.18, 0.45, 3),
+          new THREE.BoxGeometry(
+            0.18,
+            0.45,
+            3
+          ),
           new THREE.MeshStandardMaterial({
             color: 0xb7bdc5
           })
         );
 
-        rail.position.copy(p).addScaledVector(
-          side,
-          sign * (this.spec.width / 2 + 1)
-        );
+        rail.position
+          .copy(p)
+          .addScaledVector(
+            side,
+            sign *
+              (this.spec.width / 2 + 1)
+          );
 
         rail.position.y = 0.35;
-        rail.rotation.y = -Math.atan2(d.z, d.x);
+
+        rail.rotation.y = -Math.atan2(
+          d.z,
+          d.x
+        );
 
         group.add(rail);
       }
@@ -144,7 +186,11 @@ export class Track {
 
     // Start banner
     const banner = new THREE.Mesh(
-      new THREE.BoxGeometry(8, 2, 0.25),
+      new THREE.BoxGeometry(
+        8,
+        2,
+        0.25
+      ),
       new THREE.MeshStandardMaterial({
         color: 0xd9293a,
         emissive: 0x220000
@@ -161,26 +207,35 @@ export class Track {
   }
 
   addScenery(group) {
-    const trunk = new THREE.MeshStandardMaterial({
-      color: 0x765238
-    });
+    const trunk =
+      new THREE.MeshStandardMaterial({
+        color: 0x765238
+      });
 
-    const leaf = new THREE.MeshStandardMaterial({
-      color: 0x167a42
-    });
+    const leaf =
+      new THREE.MeshStandardMaterial({
+        color: 0x167a42
+      });
 
-    const rice = new THREE.MeshStandardMaterial({
-      color: 0x8bba45
-    });
+    const rice =
+      new THREE.MeshStandardMaterial({
+        color: 0x8bba45
+      });
 
     for (let i = 0; i < 52; i++) {
       const a = i * 2.399;
       const r = 54 + (i % 5) * 7;
+
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
 
       const t = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.35, 0.45, 4, 7),
+        new THREE.CylinderGeometry(
+          0.35,
+          0.45,
+          4,
+          7
+        ),
         trunk
       );
 
@@ -188,7 +243,11 @@ export class Track {
       group.add(t);
 
       const crown = new THREE.Mesh(
-        new THREE.ConeGeometry(2.3, 5, 8),
+        new THREE.ConeGeometry(
+          2.3,
+          5,
+          8
+        ),
         leaf
       );
 
@@ -196,10 +255,22 @@ export class Track {
       group.add(crown);
     }
 
-    for (let x = -92; x < -52; x += 4) {
-      for (let z = -34; z < 28; z += 4) {
+    for (
+      let x = -92;
+      x < -52;
+      x += 4
+    ) {
+      for (
+        let z = -34;
+        z < 28;
+        z += 4
+      ) {
         const patch = new THREE.Mesh(
-          new THREE.BoxGeometry(3.6, 0.08, 3.6),
+          new THREE.BoxGeometry(
+            3.6,
+            0.08,
+            3.6
+          ),
           rice
         );
 
@@ -218,28 +289,51 @@ export class Track {
     );
 
     ocean.rotation.x = -Math.PI / 2;
-    ocean.position.set(63, -0.12, -52);
+    ocean.position.set(
+      63,
+      -0.12,
+      -52
+    );
+
     group.add(ocean);
 
     const mountain = new THREE.Mesh(
-      new THREE.ConeGeometry(19, 34, 7),
+      new THREE.ConeGeometry(
+        19,
+        34,
+        7
+      ),
       new THREE.MeshStandardMaterial({
         color: 0x496a53
       })
     );
 
-    mountain.position.set(-8, 16, -86);
+    mountain.position.set(
+      -8,
+      16,
+      -86
+    );
+
     group.add(mountain);
 
     for (const x of [-8, 8]) {
       const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.08, 7),
+        new THREE.CylinderGeometry(
+          0.08,
+          0.08,
+          7
+        ),
         new THREE.MeshBasicMaterial({
           color: 0x555555
         })
       );
 
-      pole.position.set(x, 3, 6);
+      pole.position.set(
+        x,
+        3,
+        6
+      );
+
       group.add(pole);
 
       for (const [y, c] of [
@@ -247,14 +341,22 @@ export class Track {
         [4.1, 0xffffff]
       ]) {
         const f = new THREE.Mesh(
-          new THREE.PlaneGeometry(2.3, 0.7),
+          new THREE.PlaneGeometry(
+            2.3,
+            0.7
+          ),
           new THREE.MeshBasicMaterial({
             color: c,
             side: THREE.DoubleSide
           })
         );
 
-        f.position.set(x + 1.1, y, 6);
+        f.position.set(
+          x + 1.1,
+          y,
+          6
+        );
+
         group.add(f);
       }
     }
@@ -265,7 +367,8 @@ export class Track {
     let d = Infinity;
 
     this.points.forEach((p, i) => {
-      const v = p.distanceToSquared(position);
+      const v =
+        p.distanceToSquared(position);
 
       if (v < d) {
         d = v;

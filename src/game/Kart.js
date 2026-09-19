@@ -40,6 +40,7 @@ export class Kart {
       new THREE.BoxGeometry(2.15, 0.42, 3.35),
       paint
     );
+
     body.position.y = 0.62;
     kart.add(body);
 
@@ -47,6 +48,7 @@ export class Kart {
       new THREE.BoxGeometry(1.72, 0.28, 0.7),
       paint
     );
+
     nose.position.set(0, 0.56, 1.88);
     kart.add(nose);
 
@@ -54,6 +56,7 @@ export class Kart {
       new THREE.BoxGeometry(2.38, 0.16, 0.22),
       black
     );
+
     bumper.position.set(0, 0.43, 2.23);
     kart.add(bumper);
 
@@ -61,6 +64,7 @@ export class Kart {
       new THREE.BoxGeometry(1.8, 0.16, 0.35),
       paint
     );
+
     spoiler.position.set(0, 1.32, -1.5);
     kart.add(spoiler);
 
@@ -69,6 +73,7 @@ export class Kart {
         new THREE.BoxGeometry(0.1, 0.7, 0.1),
         black
       );
+
       post.position.set(x, 1.02, -1.43);
       kart.add(post);
     }
@@ -77,6 +82,7 @@ export class Kart {
       new THREE.BoxGeometry(1.1, 0.66, 1.05),
       black
     );
+
     seat.position.set(0, 1.0, -0.22);
     kart.add(seat);
 
@@ -90,6 +96,7 @@ export class Kart {
         wheel.rotation.z = Math.PI / 2;
         wheel.position.set(x, 0.4, z);
         wheel.userData.wheel = true;
+
         kart.add(wheel);
       }
     }
@@ -98,6 +105,7 @@ export class Kart {
       new THREE.CylinderGeometry(0.34, 0.45, 0.8, 8),
       shirt
     );
+
     torso.position.set(0, 1.55, -0.1);
     kart.add(torso);
 
@@ -105,6 +113,7 @@ export class Kart {
       new THREE.SphereGeometry(0.36, 10, 8),
       skin
     );
+
     head.position.set(0, 2.2, -0.03);
     kart.add(head);
 
@@ -120,6 +129,7 @@ export class Kart {
       ),
       black
     );
+
     hair.position.set(0, 2.28, -0.03);
     kart.add(hair);
 
@@ -128,6 +138,7 @@ export class Kart {
         new THREE.CylinderGeometry(0.1, 0.12, 0.65, 7),
         skin
       );
+
       arm.position.set(x, 1.55, 0.36);
       arm.rotation.z = x * 0.8;
       kart.add(arm);
@@ -136,6 +147,7 @@ export class Kart {
         new THREE.CylinderGeometry(0.13, 0.16, 0.7, 7),
         black
       );
+
       leg.position.set(x * 0.65, 1.0, 0.43);
       leg.rotation.x = Math.PI / 2;
       kart.add(leg);
@@ -145,6 +157,7 @@ export class Kart {
       new THREE.TorusGeometry(0.3, 0.05, 7, 12),
       black
     );
+
     steering.rotation.x = Math.PI / 2;
     steering.position.set(0, 1.36, 0.62);
     kart.add(steering);
@@ -159,6 +172,9 @@ export class Kart {
     this.speed = 0;
     this.lap = 0;
     this.finished = false;
+    this.boost = 100;
+    this.progress = 0;
+    this.previousProgress = 0;
   }
 
   updatePlayer(dt, input, track) {
@@ -167,6 +183,7 @@ export class Kart {
 
     const forward = input.down('KeyW', 'ArrowUp');
     const backward = input.down('KeyS', 'ArrowDown');
+
     const boost =
       input.down('ShiftLeft', 'ShiftRight', 'Space') &&
       this.boost > 0 &&
@@ -186,13 +203,22 @@ export class Kart {
 
     this.speed = Math.max(
       -9,
-      Math.min(max + (boost ? 12 : 0), this.speed)
+      Math.min(
+        max + (boost ? 12 : 0),
+        this.speed
+      )
     );
 
     if (boost) {
-      this.boost = Math.max(0, this.boost - 31 * dt);
+      this.boost = Math.max(
+        0,
+        this.boost - 31 * dt
+      );
     } else {
-      this.boost = Math.min(100, this.boost + 10 * dt);
+      this.boost = Math.min(
+        100,
+        this.boost + 10 * dt
+      );
     }
 
     const steer =
@@ -211,8 +237,14 @@ export class Kart {
   }
 
   updateAI(dt, track, target) {
-    const to = target.clone().sub(this.mesh.position);
-    const desired = Math.atan2(to.x, to.z);
+    const to = target
+      .clone()
+      .sub(this.mesh.position);
+
+    const desired = Math.atan2(
+      to.x,
+      to.z
+    );
 
     let delta = Math.atan2(
       Math.sin(desired - this.heading),
@@ -233,31 +265,95 @@ export class Kart {
   }
 
   move(dt, track) {
-    const f = new THREE.Vector3(
+    const forward = new THREE.Vector3(
       Math.sin(this.heading),
       0,
       Math.cos(this.heading)
     );
 
-    this.mesh.position.addScaledVector(f, this.speed * dt);
+    this.mesh.position.addScaledVector(
+      forward,
+      this.speed * dt
+    );
 
-    const n = track.nearest(this.mesh.position);
+    const nearest = track.nearest(
+      this.mesh.position
+    );
 
-    if (n.distance > track.spec.width * 0.57) {
-      this.mesh.position.copy(track.points[n.index]);
-      this.speed *= 0.38;
+    /*
+     * Batas lintasan.
+     *
+     * Jika kart mulai keluar dari track,
+     * kart didorong kembali menuju sisi aman
+     * dan kecepatannya dikurangi.
+     */
+    if (
+      nearest.distance >
+      track.spec.width * 0.52
+    ) {
+      const tangent =
+        track.curve.getTangentAt(
+          nearest.progress
+        );
+
+      const side = new THREE.Vector3(
+        -tangent.z,
+        0,
+        tangent.x
+      );
+
+      const offset =
+        this.mesh.position
+          .clone()
+          .sub(track.points[nearest.index])
+          .dot(side);
+
+      const safe =
+        Math.sign(offset || 1) *
+        track.spec.width *
+        0.5;
+
+      this.mesh.position
+        .copy(track.points[nearest.index])
+        .addScaledVector(
+          side,
+          safe
+        );
+
+      this.speed *= 0.48;
+
+      this.heading +=
+        Math.sign(offset || 1) *
+        0.12;
+    }
+
+    /*
+     * Jika kart sudah terlalu jauh dari
+     * lintasan, arahkan kembali secara halus.
+     */
+    if (
+      nearest.distance >
+      track.spec.width * 1.1
+    ) {
+      this.mesh.position.lerp(
+        track.points[nearest.index],
+        dt * 1.8
+      );
+
+      this.speed *= 0.75;
     }
 
     this.mesh.rotation.y = this.heading;
 
-    this.mesh.traverse((o) => {
-      if (o.userData.wheel) {
-        o.rotation.y -= this.speed * dt * 2;
+    this.mesh.traverse((object) => {
+      if (object.userData.wheel) {
+        object.rotation.y -=
+          this.speed * dt * 2;
       }
     });
 
     this.previousProgress = this.progress;
-    this.progress = n.progress;
+    this.progress = nearest.progress;
 
     if (
       this.previousProgress > 0.88 &&
