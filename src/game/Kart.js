@@ -246,68 +246,87 @@ export class Kart {
     }
   }
 
-  loadCharacterModel(kart, modelPath) {
-    gltfLoader.load(
-      modelPath,
+loadCharacterModel(kart, modelPath) {
+  console.log('MULAI LOAD MODEL:', modelPath);
 
-      (gltf) => {
-        const model = gltf.scene;
+  gltfLoader.load(
+    modelPath,
 
-        /*
-         * Ukuran awal model.
-         *
-         * Kalau nanti terlalu besar/kecil,
-         * kita tinggal mengubah angka ini.
-         */
-        model.scale.set(
-          1,
-          1,
-          1
-        );
+    (gltf) => {
+      console.log('MODEL BERHASIL DIMUAT:', modelPath);
 
-        /*
-         * Posisi karakter di atas kursi.
-         */
-        model.position.set(
-          0,
-          0.65,
-          -0.25
-        );
+      const model = gltf.scene;
 
-        /*
-         * Beberapa GLB menghadap arah
-         * yang berlawanan dengan arah kart.
-         */
-        model.rotation.y = Math.PI;
+      // Hitung ukuran asli model
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
 
-        model.traverse((object) => {
-          if (object.isMesh) {
-            object.castShadow = true;
-            object.receiveShadow = true;
-          }
-        });
+      console.log('UKURAN MODEL:', size);
+      console.log('CENTER MODEL:', center);
 
-        model.userData.characterModel = true;
+      // Pusatkan model
+      model.position.sub(center);
 
-        kart.add(model);
-      },
+      // Normalisasi ukuran model
+      const maxSize = Math.max(
+        size.x,
+        size.y,
+        size.z
+      );
 
-      undefined,
+      const targetHeight = 2.2;
 
-      (error) => {
-        console.error(
-          `Gagal memuat model karakter: ${modelPath}`,
-          error
-        );
-
-        /*
-         * Kalau GLB gagal dimuat,
-         * karakter generik tetap muncul.
-         */
-        this.addGenericCharacter(kart);
+      if (maxSize > 0) {
+        const scale = targetHeight / maxSize;
+        model.scale.setScalar(scale);
       }
-    );
-  }
+
+      // Tempatkan di atas kart
+      model.position.y = 0.65;
+
+      model.rotation.y = Math.PI;
+
+      model.traverse((object) => {
+        if (object.isMesh) {
+          object.castShadow = true;
+          object.receiveShadow = true;
+
+          if (object.material) {
+            object.material.needsUpdate = true;
+          }
+        }
+      });
+
+      model.userData.characterModel = true;
+
+      kart.add(model);
+
+      console.log('MODEL DITEMPEL KE KART');
+    },
+
+    (progress) => {
+      if (progress.total > 0) {
+        console.log(
+          'LOAD:',
+          Math.round(
+            (progress.loaded / progress.total) * 100
+          ) + '%'
+        );
+      }
+    },
+
+    (error) => {
+      console.error(
+        'GAGAL LOAD MODEL:',
+        modelPath,
+        error
+      );
+
+      this.addGenericCharacter(kart);
+    }
+  );
+}
 
   reset(pos, heading) {
     this.mesh.position.copy(pos);
