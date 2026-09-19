@@ -5,6 +5,6 @@ await mkdir('dist', { recursive: true });
 
 await cp('index.html', 'dist/index.html');
 await cp('src', 'dist/src', { recursive: true });
-await cp('Prabowo.glb', 'dist/wowok.glb');
+await cp('wowok.glb', 'dist/wowok.glb');
 
 console.log('Static WebGL site written to dist/.');
