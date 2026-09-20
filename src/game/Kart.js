@@ -253,62 +253,93 @@ loadCharacterModel(kart, modelPath) {
     modelPath,
 
     (gltf) => {
-      console.log('MODEL BERHASIL DIMUAT:', modelPath);
+      console.log(
+        'MODEL BERHASIL DIMUAT:',
+        modelPath
+      );
 
       const model = gltf.scene;
 
-      // Hitung ukuran model asli
-      const box = new THREE.Box3().setFromObject(model);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
+      // Hitung ukuran asli
+      const box =
+        new THREE.Box3()
+          .setFromObject(model);
+
+      const size =
+        box.getSize(
+          new THREE.Vector3()
+        );
+
+      const center =
+        box.getCenter(
+          new THREE.Vector3()
+        );
 
       // Pusatkan model
-      model.position.sub(center);
-
-      // BESARKAN MODEL
-      const maxSize = Math.max(
-        size.x,
-        size.y,
-        size.z
+      model.position.sub(
+        center
       );
 
-      const targetSize = 4.0;
+      // Ukuran karakter
+      const maxSize =
+        Math.max(
+          size.x,
+          size.y,
+          size.z
+        );
+
+      const targetSize = 2.5;
 
       if (maxSize > 0) {
-        const scale = targetSize / maxSize;
-        model.scale.setScalar(scale);
+        const scale =
+          targetSize / maxSize;
+
+        model.scale.setScalar(
+          scale
+        );
       }
 
-      // Posisi karakter di atas kart
-      model.position.set(
-        0,
-        0.75,
-        -0.25
-      );
+      // Posisi di atas kart
+      model.position.y = 0.65;
 
-      // ARAH MODEL
-      // Coba ini terlebih dahulu
+      // Arah karakter
       model.rotation.y = 0;
 
-      model.traverse((object) => {
-        if (object.isMesh) {
-          object.castShadow = true;
-          object.receiveShadow = true;
+      model.traverse(
+        (object) => {
+          if (object.isMesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
 
-          if (object.material) {
-            object.material.needsUpdate = true;
+            if (object.material) {
+              object.material.needsUpdate = true;
+            }
           }
         }
-      });
+      );
 
-      model.userData.characterModel = true;
+      model.userData.characterModel =
+        true;
 
       kart.add(model);
 
-      console.log('MODEL DITEMPEL KE KART');
+      console.log(
+        'MODEL DITEMPEL KE KART'
+      );
     },
 
-    undefined,
+    (progress) => {
+      if (progress.total > 0) {
+        console.log(
+          'LOAD:',
+          Math.round(
+            (progress.loaded /
+              progress.total) *
+              100
+          ) + '%'
+        );
+      }
+    },
 
     (error) => {
       console.error(
@@ -317,7 +348,9 @@ loadCharacterModel(kart, modelPath) {
         error
       );
 
-      this.addGenericCharacter(kart);
+      this.addGenericCharacter(
+        kart
+      );
     }
   );
 }
