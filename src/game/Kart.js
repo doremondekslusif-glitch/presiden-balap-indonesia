@@ -22,6 +22,18 @@ export class Kart {
     this.finished = false;
     this.boost = 100;
 
+    this.maxSpeed =
+      15 * (character.speed ?? 1);
+
+    this.acceleration =
+      8 * (character.acceleration ?? 1);
+
+    this.handling =
+      character.handling ?? 1;
+
+    this.boostPower =
+      character.boost ?? 1;
+
     this.mesh = this.makeMesh();
   }
 
@@ -31,10 +43,6 @@ export class Kart {
 
   makeMesh() {
     const kart = new THREE.Group();
-
-    // ===================================================
-    // MATERIAL
-    // ===================================================
 
     const paint =
       new THREE.MeshStandardMaterial({
@@ -50,7 +58,7 @@ export class Kart {
       });
 
     // ===================================================
-    // BADAN KART
+    // BADAN
     // ===================================================
 
     const body =
@@ -64,7 +72,6 @@ export class Kart {
       );
 
     body.position.y = 0.62;
-
     body.castShadow = true;
     body.receiveShadow = true;
 
@@ -275,8 +282,6 @@ export class Kart {
         roughness: 0.7
       });
 
-    // BADAN
-
     const torso =
       new THREE.Mesh(
         new THREE.CylinderGeometry(
@@ -298,8 +303,6 @@ export class Kart {
 
     kart.add(torso);
 
-    // KEPALA
-
     const head =
       new THREE.Mesh(
         new THREE.SphereGeometry(
@@ -319,8 +322,6 @@ export class Kart {
     head.castShadow = true;
 
     kart.add(head);
-
-    // RAMBUT
 
     const hair =
       new THREE.Mesh(
@@ -347,8 +348,6 @@ export class Kart {
     hair.castShadow = true;
 
     kart.add(hair);
-
-    // TANGAN DAN KAKI
 
     for (const x of [-0.38, 0.38]) {
       const arm =
@@ -413,10 +412,6 @@ export class Kart {
       modelPath
     );
 
-    // ===================================================
-    // JIKA SUDAH ADA DI CACHE
-    // ===================================================
-
     if (modelCache.has(modelPath)) {
       const cached =
         modelCache.get(modelPath);
@@ -430,10 +425,6 @@ export class Kart {
 
       return;
     }
-
-    // ===================================================
-    // JIKA SEDANG DILOAD OLEH KART LAIN
-    // ===================================================
 
     if (modelLoading.has(modelPath)) {
       modelLoading
@@ -452,10 +443,6 @@ export class Kart {
 
       return;
     }
-
-    // ===================================================
-    // LOAD PERTAMA
-    // ===================================================
 
     const loadingPromise =
       new Promise(
@@ -482,7 +469,6 @@ export class Kart {
                 return;
               }
 
-              // Simpan model asli
               modelCache.set(
                 modelPath,
                 sourceModel
@@ -522,9 +508,6 @@ export class Kart {
 
         kart.add(model);
 
-        // Loading selesai,
-        // tidak perlu disimpan lagi
-        // sebagai promise aktif.
         modelLoading.delete(
           modelPath
         );
@@ -534,9 +517,7 @@ export class Kart {
           modelPath
         );
 
-        this.addGenericCharacter(
-          kart
-        );
+        this.addGenericCharacter(kart);
       });
   }
 
@@ -544,73 +525,289 @@ export class Kart {
   // SIAPKAN MODEL KARAKTER
   // =====================================================
 
-prepareCharacter(model) {
-  model.visible = true;
+  prepareCharacter(model) {
+    model.visible = true;
 
-  model.traverse((child) => {
-    if (child.isMesh) {
-      child.visible = true;
-      child.castShadow = true;
-      child.receiveShadow = true;
-    }
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.visible = true;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
 
-    if (child.isBone) {
-      console.log(
-        'BONE:',
-        child.name
+    const box =
+      new THREE.Box3().setFromObject(
+        model
       );
+
+    const size =
+      box.getSize(
+        new THREE.Vector3()
+      );
+
+    const targetHeight = 2.35;
+
+    if (size.y > 0) {
+      const scale =
+        targetHeight / size.y;
+
+      model.scale.setScalar(scale);
     }
-  });
 
-  const box =
-    new THREE.Box3().setFromObject(model);
+    const scaledBox =
+      new THREE.Box3().setFromObject(
+        model
+      );
 
-  const size =
-    box.getSize(new THREE.Vector3());
+    const center =
+      scaledBox.getCenter(
+        new THREE.Vector3()
+      );
 
-  const targetHeight = 2.35;
+    model.position.x -= center.x;
+    model.position.z -= center.z;
 
-  if (size.y > 0) {
-    const scale =
-      targetHeight / size.y;
+    const bottomBox =
+      new THREE.Box3().setFromObject(
+        model
+      );
 
-    model.scale.setScalar(scale);
-  }
+    model.position.y -=
+      bottomBox.min.y;
 
-  const finalBox =
-    new THREE.Box3().setFromObject(model);
+    // Posisi karakter di atas kursi
+    model.position.y = 0.95;
+    model.position.z = -0.35;
 
-  const center =
-    finalBox.getCenter(
-      new THREE.Vector3()
+    model.rotation.set(
+      0,
+      0,
+      0
     );
 
-  model.position.x -= center.x;
-  model.position.z -= center.z;
+    return model;
+  }
 
-  const finalBox2 =
-    new THREE.Box3().setFromObject(model);
+  // =====================================================
+  // RESET
+  // =====================================================
 
-  model.position.y -= finalBox2.min.y;
+  reset(position, heading) {
+    this.mesh.position.copy(
+      position
+    );
 
-  model.position.y = 0.95;
-  model.position.z = -0.35;
+    this.mesh.rotation.y =
+      heading;
 
-  model.rotation.set(
-    0,
-    0,
-    0
-  );
+    this.heading =
+      heading;
 
-  console.log(
-    'MODEL SELESAI DIPERSIAPKAN'
-  );
+    this.speed = 0;
 
-  console.log(
-    'TINGGI:',
-    size.y
-  );
-}
+    this.lap = 0;
+
+    this.progress = 0;
+
+    this.previousProgress = 0;
+
+    this.finished = false;
+
+    this.boost = 100;
+  }
+
+  // =====================================================
+  // PLAYER
+  // =====================================================
+
+  updatePlayer(
+    dt,
+    input,
+    track
+  ) {
+    let throttle = 0;
+
+    if (
+      input.keys.has('w') ||
+      input.keys.has('arrowup')
+    ) {
+      throttle = 1;
+    }
+
+    if (
+      input.keys.has('s') ||
+      input.keys.has('arrowdown')
+    ) {
+      throttle = -1;
+    }
+
+    const boosting =
+      (
+        input.keys.has('shift') ||
+        input.keys.has(' ')
+      ) &&
+      this.boost > 0 &&
+      this.speed > 2;
+
+    const topSpeed =
+      this.maxSpeed *
+      (boosting
+        ? 1.65 * this.boostPower
+        : 1);
+
+    if (throttle > 0) {
+      this.speed +=
+        this.acceleration *
+        dt;
+    } else if (throttle < 0) {
+      this.speed -=
+        this.acceleration *
+        1.25 *
+        dt;
+    } else {
+      this.speed *=
+        Math.pow(
+          0.985,
+          dt * 60
+        );
+    }
+
+    if (boosting) {
+      this.speed +=
+        this.acceleration *
+        1.8 *
+        dt;
+
+      this.boost -=
+        35 * dt;
+
+      if (this.boost < 0) {
+        this.boost = 0;
+      }
+    } else {
+      this.boost = Math.min(
+        100,
+        this.boost +
+          8 * dt
+      );
+    }
+
+    this.speed = THREE.MathUtils.clamp(
+      this.speed,
+      -6,
+      topSpeed
+    );
+
+    let steer = 0;
+
+    if (
+      input.keys.has('a') ||
+      input.keys.has('arrowleft')
+    ) {
+      steer -= 1;
+    }
+
+    if (
+      input.keys.has('d') ||
+      input.keys.has('arrowright')
+    ) {
+      steer += 1;
+    }
+
+    const steeringStrength =
+      THREE.MathUtils.clamp(
+        Math.abs(this.speed) /
+          8,
+        0.25,
+        1
+      );
+
+    this.heading +=
+      steer *
+      1.65 *
+      this.handling *
+      steeringStrength *
+      dt *
+      Math.sign(
+        this.speed || 1
+      );
+
+    this.move(
+      dt,
+      track
+    );
+  }
+
+  // =====================================================
+  // AI
+  // =====================================================
+
+  updateAI(
+    dt,
+    track,
+    target
+  ) {
+    if (this.finished) {
+      return;
+    }
+
+    const targetPoint =
+      target.clone();
+
+    const direction =
+      targetPoint
+        .sub(
+          this.mesh.position
+        )
+        .normalize();
+
+    const desiredHeading =
+      Math.atan2(
+        direction.x,
+        direction.z
+      );
+
+    let difference =
+      desiredHeading -
+      this.heading;
+
+    while (
+      difference > Math.PI
+    ) {
+      difference -=
+        Math.PI * 2;
+    }
+
+    while (
+      difference < -Math.PI
+    ) {
+      difference +=
+        Math.PI * 2;
+    }
+
+    this.heading +=
+      THREE.MathUtils.clamp(
+        difference,
+        -1.5 * dt,
+        1.5 * dt
+      );
+
+    this.speed +=
+      this.acceleration *
+      dt;
+
+    this.speed = Math.min(
+      this.speed,
+      this.maxSpeed *
+        0.82
+    );
+
+    this.move(
+      dt,
+      track
+    );
+  }
 
   // =====================================================
   // MOVE
@@ -644,8 +841,7 @@ prepareCharacter(model) {
 
     if (
       nearest.distance >
-      track.spec.width *
-        0.52
+      track.spec.width * 0.52
     ) {
       const tangent =
         track.curve
@@ -700,8 +896,7 @@ prepareCharacter(model) {
 
     if (
       nearest.distance >
-      track.spec.width *
-        1.1
+      track.spec.width * 1.1
     ) {
       this.mesh.position.lerp(
         track.points[
@@ -749,10 +944,8 @@ prepareCharacter(model) {
     // ===================================================
 
     if (
-      this.previousProgress >
-        0.88 &&
-      this.progress <
-        0.12 &&
+      this.previousProgress > 0.88 &&
+      this.progress < 0.12 &&
       this.speed > 2
     ) {
       this.lap++;
@@ -767,6 +960,6 @@ prepareCharacter(model) {
     return this.finished
       ? 9999 + this.lap
       : this.lap +
-          this.progress;
+        this.progress;
   }
 }
