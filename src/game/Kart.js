@@ -1,6 +1,7 @@
 ```js
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { Track } from './Track.js';
+import { Kart } from './Kart.js?v=2';
 
 const gltfLoader = new GLTFLoader();
 
