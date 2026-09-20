@@ -545,386 +545,72 @@ export class Kart {
   // =====================================================
 
 prepareCharacter(model) {
-  // ===================================================
-  // AKTIFKAN SEMUA MESH
-  // ===================================================
+  model.visible = true;
 
-  model.traverse((object) => {
-    if (object.isMesh) {
-      object.visible = true;
-      object.castShadow = true;
-      object.receiveShadow = true;
+  model.traverse((child) => {
+    if (child.isMesh) {
+      child.visible = true;
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
 
-      if (object.material) {
-        object.material.needsUpdate = true;
-      }
+    if (child.isBone) {
+      console.log(
+        'BONE:',
+        child.name
+      );
     }
   });
-
-  // ===================================================
-  // HITUNG UKURAN MODEL
-  // ===================================================
 
   const box =
     new THREE.Box3().setFromObject(model);
 
   const size =
-    box.getSize(
-      new THREE.Vector3()
-    );
-
-  if (
-    size.x <= 0 ||
-    size.y <= 0 ||
-    size.z <= 0
-  ) {
-    return model;
-  }
-
-  // ===================================================
-  // PUSATKAN MODEL
-  // ===================================================
-
-  const center =
-    box.getCenter(
-      new THREE.Vector3()
-    );
-
-  model.position.sub(center);
-
-  // ===================================================
-  // SCALE
-  // ===================================================
+    box.getSize(new THREE.Vector3());
 
   const targetHeight = 2.35;
 
-  const scale =
-    targetHeight / size.y;
+  if (size.y > 0) {
+    const scale =
+      targetHeight / size.y;
 
-  model.scale.setScalar(scale);
+    model.scale.setScalar(scale);
+  }
 
-  // ===================================================
-  // HITUNG ULANG UKURAN
-  // ===================================================
+  const finalBox =
+    new THREE.Box3().setFromObject(model);
 
-  const scaledBox =
-    new THREE.Box3()
-      .setFromObject(model);
+  const center =
+    finalBox.getCenter(
+      new THREE.Vector3()
+    );
 
-  const scaledHeight =
-    scaledBox.max.y -
-    scaledBox.min.y;
+  model.position.x -= center.x;
+  model.position.z -= center.z;
 
-  // ===================================================
-  // POSISI DI KURSI
-  // ===================================================
+  const finalBox2 =
+    new THREE.Box3().setFromObject(model);
 
-  /*
-   * Kursi berada sekitar y = 1.0.
-   *
-   * Kita letakkan titik bawah model
-   * sedikit masuk ke area kursi.
-   */
+  model.position.y -= finalBox2.min.y;
 
-  const seatY = 0.98;
-
-  model.position.y +=
-    seatY -
-    scaledBox.min.y;
-
-  // Mundurkan sedikit
-  // agar posisi tubuh berada
-  // di tengah kursi.
+  model.position.y = 0.95;
   model.position.z = -0.35;
 
-  // ===================================================
-  // POSE DUDUK
-  // ===================================================
+  model.rotation.set(
+    0,
+    0,
+    0
+  );
 
-  model.traverse((object) => {
-    if (!object.isBone) {
-      return;
-    }
+  console.log(
+    'MODEL SELESAI DIPERSIAPKAN'
+  );
 
-    const name =
-      object.name.toLowerCase();
-
-    // -----------------------------------------------
-    // PANGGUL
-    // -----------------------------------------------
-
-    if (
-      name.includes('hip') ||
-      name.includes('pelvis')
-    ) {
-      object.rotation.x -= 0.25;
-    }
-
-    // -----------------------------------------------
-    // PAHA
-    // -----------------------------------------------
-
-    if (
-      name.includes('thigh') ||
-      name.includes('upleg') ||
-      name.includes('upperleg')
-    ) {
-      object.rotation.x += 0.9;
-    }
-
-    // -----------------------------------------------
-    // BETIS
-    // -----------------------------------------------
-
-    if (
-      name.includes('calf') ||
-      name.includes('lowerleg') ||
-      name.includes('shin')
-    ) {
-      object.rotation.x -= 1.0;
-    }
-
-    // -----------------------------------------------
-    // TANGAN
-    // -----------------------------------------------
-
-    if (
-      name.includes('upperarm') ||
-      name.includes('arm')
-    ) {
-      object.rotation.x += 0.25;
-    }
-
-    // -----------------------------------------------
-    // LENGAN BAWAH
-    // -----------------------------------------------
-
-    if (
-      name.includes('forearm') ||
-      name.includes('lowerarm')
-    ) {
-      object.rotation.x += 0.35;
-    }
-  });
-
-  // ===================================================
-  // ARAH KARAKTER
-  // ===================================================
-
-  model.rotation.y = 0;
-
-  // ===================================================
-  // DATA
-  // ===================================================
-
-  model.userData.characterModel = true;
-
-  return model;
+  console.log(
+    'TINGGI:',
+    size.y
+  );
 }
-
-  // =====================================================
-  // RESET
-  // =====================================================
-
-  reset(pos, heading) {
-    this.mesh.position.copy(pos);
-
-    this.heading = heading;
-
-    this.mesh.rotation.y =
-      heading;
-
-    this.speed = 0;
-
-    this.lap = 0;
-
-    this.finished = false;
-
-    this.boost = 100;
-
-    this.progress = 0;
-
-    this.previousProgress = 0;
-  }
-
-  // =====================================================
-  // PLAYER
-  // =====================================================
-
-  updatePlayer(
-    dt,
-    input,
-    track
-  ) {
-    const accel =
-      this.character.acceleration *
-      22;
-
-    const max =
-      30 *
-      this.character.speed;
-
-    const forward =
-      input.down(
-        'KeyW',
-        'ArrowUp'
-      );
-
-    const backward =
-      input.down(
-        'KeyS',
-        'ArrowDown'
-      );
-
-    const boost =
-      input.down(
-        'ShiftLeft',
-        'ShiftRight',
-        'Space'
-      ) &&
-      this.boost > 0 &&
-      forward;
-
-    if (forward) {
-      this.speed +=
-        accel * dt;
-    }
-
-    if (backward) {
-      this.speed -=
-        accel *
-        1.15 *
-        dt;
-    }
-
-    if (
-      !forward &&
-      !backward
-    ) {
-      this.speed *=
-        Math.pow(
-          0.55,
-          dt
-        );
-    }
-
-    this.speed =
-      Math.max(
-        -9,
-        Math.min(
-          max +
-            (boost ? 12 : 0),
-          this.speed
-        )
-      );
-
-    if (boost) {
-      this.boost =
-        Math.max(
-          0,
-          this.boost -
-            31 * dt
-        );
-    } else {
-      this.boost =
-        Math.min(
-          100,
-          this.boost +
-            10 * dt
-        );
-    }
-
-    const steer =
-      (input.down(
-        'KeyA',
-        'ArrowLeft'
-      )
-        ? 1
-        : 0) -
-      (input.down(
-        'KeyD',
-        'ArrowRight'
-      )
-        ? 1
-        : 0);
-
-    this.heading +=
-      steer *
-      dt *
-      2.25 *
-      Math.min(
-        1,
-        Math.abs(
-          this.speed
-        ) / 9
-      ) *
-      (this.speed >= 0
-        ? 1
-        : -1) *
-      this.character.handling;
-
-    this.move(
-      dt,
-      track
-    );
-  }
-
-  // =====================================================
-  // AI
-  // =====================================================
-
-  updateAI(
-    dt,
-    track,
-    target
-  ) {
-    const to =
-      target
-        .clone()
-        .sub(
-          this.mesh.position
-        );
-
-    const desired =
-      Math.atan2(
-        to.x,
-        to.z
-      );
-
-    const delta =
-      Math.atan2(
-        Math.sin(
-          desired -
-            this.heading
-        ),
-        Math.cos(
-          desired -
-            this.heading
-        )
-      );
-
-    this.heading +=
-      Math.max(
-        -1.7 * dt,
-        Math.min(
-          1.7 * dt,
-          delta
-        )
-      );
-
-    this.speed =
-      Math.min(
-        25 *
-          this.character.speed,
-        this.speed +
-          15 * dt
-      );
-
-    this.move(
-      dt,
-      track
-    );
-  }
 
   // =====================================================
   // MOVE
