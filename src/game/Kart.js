@@ -3,6 +3,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const gltfLoader = new GLTFLoader();
 
+// Cache model GLB agar tidak download berulang kali
+const modelCache = new Map();
+const modelLoading = new Map();
+
 export class Kart {
   constructor(character, isPlayer = false) {
     this.character = character;
@@ -21,12 +25,16 @@ export class Kart {
     this.mesh = this.makeMesh();
   }
 
+  // =====================================================
+  // BUAT KART
+  // =====================================================
+
   makeMesh() {
     const kart = new THREE.Group();
 
-    // =========================
+    // ===================================================
     // MATERIAL
-    // =========================
+    // ===================================================
 
     const paint =
       new THREE.MeshStandardMaterial({
@@ -41,9 +49,9 @@ export class Kart {
         roughness: 0.75
       });
 
-    // =========================
+    // ===================================================
     // BADAN KART
-    // =========================
+    // ===================================================
 
     const body =
       new THREE.Mesh(
@@ -62,9 +70,9 @@ export class Kart {
 
     kart.add(body);
 
-    // =========================
+    // ===================================================
     // NOSE
-    // =========================
+    // ===================================================
 
     const nose =
       new THREE.Mesh(
@@ -86,9 +94,9 @@ export class Kart {
 
     kart.add(nose);
 
-    // =========================
+    // ===================================================
     // BUMPER
-    // =========================
+    // ===================================================
 
     const bumper =
       new THREE.Mesh(
@@ -108,9 +116,9 @@ export class Kart {
 
     kart.add(bumper);
 
-    // =========================
+    // ===================================================
     // SPOILER
-    // =========================
+    // ===================================================
 
     const spoiler =
       new THREE.Mesh(
@@ -150,9 +158,9 @@ export class Kart {
       kart.add(post);
     }
 
-    // =========================
-    // SEAT
-    // =========================
+    // ===================================================
+    // KURSI
+    // ===================================================
 
     const seat =
       new THREE.Mesh(
@@ -170,11 +178,13 @@ export class Kart {
       -0.22
     );
 
+    seat.castShadow = true;
+
     kart.add(seat);
 
-    // =========================
+    // ===================================================
     // RODA
-    // =========================
+    // ===================================================
 
     for (const x of [-0.92, 0.92]) {
       for (const z of [-1.12, 1.18]) {
@@ -206,9 +216,9 @@ export class Kart {
       }
     }
 
-    // =========================
+    // ===================================================
     // STEERING
-    // =========================
+    // ===================================================
 
     const steering =
       new THREE.Mesh(
@@ -232,9 +242,9 @@ export class Kart {
 
     kart.add(steering);
 
-    // =========================
+    // ===================================================
     // CHARACTER
-    // =========================
+    // ===================================================
 
     if (this.character.model) {
       this.loadCharacterModel(
@@ -249,7 +259,7 @@ export class Kart {
   }
 
   // =====================================================
-  // GENERIC CHARACTER
+  // KARAKTER GENERIK
   // =====================================================
 
   addGenericCharacter(kart) {
@@ -266,6 +276,7 @@ export class Kart {
       });
 
     // BADAN
+
     const torso =
       new THREE.Mesh(
         new THREE.CylinderGeometry(
@@ -288,6 +299,7 @@ export class Kart {
     kart.add(torso);
 
     // KEPALA
+
     const head =
       new THREE.Mesh(
         new THREE.SphereGeometry(
@@ -309,6 +321,7 @@ export class Kart {
     kart.add(head);
 
     // RAMBUT
+
     const hair =
       new THREE.Mesh(
         new THREE.SphereGeometry(
@@ -335,7 +348,8 @@ export class Kart {
 
     kart.add(hair);
 
-    // TANGAN & KAKI
+    // TANGAN DAN KAKI
+
     for (const x of [-0.38, 0.38]) {
       const arm =
         new THREE.Mesh(
@@ -390,259 +404,277 @@ export class Kart {
   }
 
   // =====================================================
-  // LOAD GLB CHARACTER
+  // LOAD MODEL
   // =====================================================
 
   loadCharacterModel(kart, modelPath) {
     console.log(
-      '================================'
-    );
-
-    console.log(
-      'MULAI LOAD MODEL:',
+      'LOAD CHARACTER:',
       modelPath
     );
 
-    gltfLoader.load(
-      modelPath,
+    // ===================================================
+    // JIKA SUDAH ADA DI CACHE
+    // ===================================================
 
-      // =========================
-      // SUCCESS
-      // =========================
+    if (modelCache.has(modelPath)) {
+      const cached =
+        modelCache.get(modelPath);
 
-      (gltf) => {
-        console.log(
-          'MODEL BERHASIL DIMUAT:',
-          modelPath
+      const model =
+        this.prepareCharacter(
+          cached.clone(true)
         );
 
-        const model =
-          gltf.scene;
+      kart.add(model);
 
-        if (!model) {
-          console.error(
-            'GLB TIDAK MEMILIKI SCENE'
-          );
+      return;
+    }
 
-          this.addGenericCharacter(
-            kart
-          );
+    // ===================================================
+    // JIKA SEDANG DILOAD OLEH KART LAIN
+    // ===================================================
 
-          return;
-        }
+    if (modelLoading.has(modelPath)) {
+      modelLoading
+        .get(modelPath)
+        .then((sourceModel) => {
+          const model =
+            this.prepareCharacter(
+              sourceModel.clone(true)
+            );
 
-        // =========================
-        // AKTIFKAN SEMUA MESH
-        // =========================
+          kart.add(model);
+        })
+        .catch(() => {
+          this.addGenericCharacter(kart);
+        });
 
-        model.traverse(
-          (object) => {
-            if (object.isMesh) {
-              object.visible = true;
+      return;
+    }
 
-              object.castShadow = true;
-              object.receiveShadow = true;
+    // ===================================================
+    // LOAD PERTAMA
+    // ===================================================
 
-              if (object.material) {
-                object.material.needsUpdate =
-                  true;
+    const loadingPromise =
+      new Promise(
+        (resolve, reject) => {
+          gltfLoader.load(
+            modelPath,
+
+            (gltf) => {
+              console.log(
+                'MODEL BERHASIL DIMUAT:',
+                modelPath
+              );
+
+              const sourceModel =
+                gltf.scene;
+
+              if (!sourceModel) {
+                reject(
+                  new Error(
+                    'GLB tidak mempunyai scene'
+                  )
+                );
+
+                return;
               }
+
+              // Simpan model asli
+              modelCache.set(
+                modelPath,
+                sourceModel
+              );
+
+              resolve(
+                sourceModel
+              );
+            },
+
+            undefined,
+
+            (error) => {
+              console.error(
+                'GAGAL LOAD MODEL:',
+                modelPath,
+                error
+              );
+
+              reject(error);
             }
-          }
-        );
-
-        // =========================
-        // HITUNG UKURAN ASLI
-        // =========================
-
-        const originalBox =
-          new THREE.Box3()
-            .setFromObject(model);
-
-        const originalSize =
-          originalBox.getSize(
-            new THREE.Vector3()
           );
-
-        console.log(
-          'UKURAN GLB ASLI:',
-          originalSize
-        );
-
-        if (
-          originalSize.x <= 0 ||
-          originalSize.y <= 0 ||
-          originalSize.z <= 0
-        ) {
-          console.error(
-            'UKURAN MODEL TIDAK VALID'
-          );
-
-          this.addGenericCharacter(
-            kart
-          );
-
-          return;
         }
+      );
 
-        // =========================
-        // PUSATKAN MODEL
-        // =========================
+    modelLoading.set(
+      modelPath,
+      loadingPromise
+    );
 
-        const originalCenter =
-          originalBox.getCenter(
-            new THREE.Vector3()
+    loadingPromise
+      .then((sourceModel) => {
+        const model =
+          this.prepareCharacter(
+            sourceModel.clone(true)
           );
-
-        model.position.sub(
-          originalCenter
-        );
-
-        // =========================
-        // SKALA MODEL
-        // =========================
-
-        const maxSize =
-          Math.max(
-            originalSize.x,
-            originalSize.y,
-            originalSize.z
-          );
-
-        const targetSize = 2.8;
-
-        const scale =
-          targetSize / maxSize;
-
-        model.scale.setScalar(
-          scale
-        );
-
-        // =========================
-        // HITUNG ULANG BOX
-        // SETELAH SCALE
-        // =========================
-
-        const scaledBox =
-          new THREE.Box3()
-            .setFromObject(model);
-
-        const scaledSize =
-          scaledBox.getSize(
-            new THREE.Vector3()
-          );
-
-        console.log(
-          'UKURAN GLB SETELAH SCALE:',
-          scaledSize
-        );
-
-        // =========================
-        // LETAKKAN KAKI DI ATAS KART
-        // =========================
-
-        const desiredBottom =
-          1.12;
-
-        const currentBottom =
-          scaledBox.min.y;
-
-        model.position.y +=
-          desiredBottom -
-          currentBottom;
-
-        // =========================
-        // ARAH KARAKTER
-        // =========================
-
-        model.rotation.y = 0;
-
-        // =========================
-        // SIMPAN DATA
-        // =========================
-
-        model.userData.characterModel =
-          true;
-
-        model.userData.modelPath =
-          modelPath;
-
-        // =========================
-        // TAMBAHKAN KE KART
-        // =========================
 
         kart.add(model);
 
-        console.log(
-          'MODEL DITEMPEL KE KART'
-        );
-
-        console.log(
-          'POSISI MODEL:',
-          model.position
-        );
-
-        console.log(
-          'SCALE MODEL:',
-          model.scale
-        );
-
-        console.log(
-          '================================'
-        );
-      },
-
-      // =========================
-      // PROGRESS
-      // =========================
-
-      (progress) => {
-        if (progress.total > 0) {
-          const percent =
-            Math.round(
-              (progress.loaded /
-                progress.total) *
-                100
-            );
-
-          console.log(
-            'LOAD MODEL:',
-            percent + '%'
-          );
-        }
-      },
-
-      // =========================
-      // ERROR
-      // =========================
-
-      (error) => {
-        console.error(
-          '================================'
-        );
-
-        console.error(
-          'GAGAL LOAD MODEL:',
+        // Loading selesai,
+        // tidak perlu disimpan lagi
+        // sebagai promise aktif.
+        modelLoading.delete(
           modelPath
         );
-
-        console.error(
-          error
-        );
-
-        console.error(
-          'Menggunakan karakter cadangan.'
-        );
-
-        console.error(
-          '================================'
+      })
+      .catch(() => {
+        modelLoading.delete(
+          modelPath
         );
 
         this.addGenericCharacter(
           kart
         );
+      });
+  }
+
+  // =====================================================
+  // SIAPKAN MODEL KARAKTER
+  // =====================================================
+
+  prepareCharacter(model) {
+    // ===================================================
+    // AKTIFKAN SEMUA MESH
+    // ===================================================
+
+    model.traverse(
+      (object) => {
+        if (object.isMesh) {
+          object.visible = true;
+
+          object.castShadow = true;
+          object.receiveShadow = true;
+
+          if (object.material) {
+            object.material.needsUpdate =
+              true;
+          }
+        }
       }
     );
+
+    // ===================================================
+    // UKURAN ASLI
+    // ===================================================
+
+    const box =
+      new THREE.Box3()
+        .setFromObject(model);
+
+    const size =
+      box.getSize(
+        new THREE.Vector3()
+      );
+
+    if (
+      size.x <= 0 ||
+      size.y <= 0 ||
+      size.z <= 0
+    ) {
+      console.error(
+        'Ukuran model tidak valid.'
+      );
+
+      return model;
+    }
+
+    // ===================================================
+    // PUSATKAN MODEL
+    // ===================================================
+
+    const center =
+      box.getCenter(
+        new THREE.Vector3()
+      );
+
+    model.position.sub(
+      center
+    );
+
+    // ===================================================
+    // SCALE
+    // ===================================================
+
+    const maxSize =
+      Math.max(
+        size.x,
+        size.y,
+        size.z
+      );
+
+    const targetHeight = 2.45;
+
+    const scale =
+      targetHeight /
+      size.y;
+
+    model.scale.setScalar(
+      scale
+    );
+
+    // ===================================================
+    // POSISI DUDUK
+    // ===================================================
+
+    /*
+     * Tinggi kursi kira-kira:
+     *
+     * bagian bawah kursi = 0.67
+     * bagian atas kursi = 1.33
+     *
+     * Kita ingin bagian bawah tubuh
+     * karakter berada sedikit masuk
+     * ke dalam area kursi.
+     */
+
+    const newBox =
+      new THREE.Box3()
+        .setFromObject(model);
+
+    const bottom =
+      newBox.min.y;
+
+    // Posisi pinggul/kaki karakter
+    // dekat dengan kursi.
+    const seatHeight = 1.05;
+
+    model.position.y +=
+      seatHeight -
+      bottom;
+
+    // ===================================================
+    // POSISI DEPAN/BELAKANG
+    // ===================================================
+
+    // Sedikit mundur agar duduk di kursi
+    model.position.z = -0.28;
+
+    // ===================================================
+    // ARAH KARAKTER
+    // ===================================================
+
+    model.rotation.y = 0;
+
+    // ===================================================
+    // DATA
+    // ===================================================
+
+    model.userData.characterModel =
+      true;
+
+    return model;
   }
 
   // =====================================================
@@ -954,9 +986,9 @@ export class Kart {
     this.mesh.rotation.y =
       this.heading;
 
-    // =========================
-    // RODA BERPUTAR
-    // =========================
+    // ===================================================
+    // ANIMASI RODA
+    // ===================================================
 
     this.mesh.traverse(
       (object) => {
@@ -971,9 +1003,9 @@ export class Kart {
       }
     );
 
-    // =========================
+    // ===================================================
     // PROGRESS
-    // =========================
+    // ===================================================
 
     this.previousProgress =
       this.progress;
@@ -981,9 +1013,9 @@ export class Kart {
     this.progress =
       nearest.progress;
 
-    // =========================
+    // ===================================================
     // LAP
-    // =========================
+    // ===================================================
 
     if (
       this.previousProgress >
