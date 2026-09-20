@@ -544,138 +544,183 @@ export class Kart {
   // SIAPKAN MODEL KARAKTER
   // =====================================================
 
-  prepareCharacter(model) {
-    // ===================================================
-    // AKTIFKAN SEMUA MESH
-    // ===================================================
+prepareCharacter(model) {
+  // ===================================================
+  // AKTIFKAN SEMUA MESH
+  // ===================================================
 
-    model.traverse(
-      (object) => {
-        if (object.isMesh) {
-          object.visible = true;
+  model.traverse((object) => {
+    if (object.isMesh) {
+      object.visible = true;
+      object.castShadow = true;
+      object.receiveShadow = true;
 
-          object.castShadow = true;
-          object.receiveShadow = true;
-
-          if (object.material) {
-            object.material.needsUpdate =
-              true;
-          }
-        }
+      if (object.material) {
+        object.material.needsUpdate = true;
       }
-    );
-
-    // ===================================================
-    // UKURAN ASLI
-    // ===================================================
-
-    const box =
-      new THREE.Box3()
-        .setFromObject(model);
-
-    const size =
-      box.getSize(
-        new THREE.Vector3()
-      );
-
-    if (
-      size.x <= 0 ||
-      size.y <= 0 ||
-      size.z <= 0
-    ) {
-      console.error(
-        'Ukuran model tidak valid.'
-      );
-
-      return model;
     }
+  });
 
-    // ===================================================
-    // PUSATKAN MODEL
-    // ===================================================
+  // ===================================================
+  // HITUNG UKURAN MODEL
+  // ===================================================
 
-    const center =
-      box.getCenter(
-        new THREE.Vector3()
-      );
+  const box =
+    new THREE.Box3().setFromObject(model);
 
-    model.position.sub(
-      center
+  const size =
+    box.getSize(
+      new THREE.Vector3()
     );
 
-    // ===================================================
-    // SCALE
-    // ===================================================
-
-    const maxSize =
-      Math.max(
-        size.x,
-        size.y,
-        size.z
-      );
-
-    const targetHeight = 2.45;
-
-    const scale =
-      targetHeight /
-      size.y;
-
-    model.scale.setScalar(
-      scale
-    );
-
-    // ===================================================
-    // POSISI DUDUK
-    // ===================================================
-
-    /*
-     * Tinggi kursi kira-kira:
-     *
-     * bagian bawah kursi = 0.67
-     * bagian atas kursi = 1.33
-     *
-     * Kita ingin bagian bawah tubuh
-     * karakter berada sedikit masuk
-     * ke dalam area kursi.
-     */
-
-    const newBox =
-      new THREE.Box3()
-        .setFromObject(model);
-
-    const bottom =
-      newBox.min.y;
-
-    // Posisi pinggul/kaki karakter
-    // dekat dengan kursi.
-    const seatHeight = 1.05;
-
-    model.position.y +=
-      seatHeight -
-      bottom;
-
-    // ===================================================
-    // POSISI DEPAN/BELAKANG
-    // ===================================================
-
-    // Sedikit mundur agar duduk di kursi
-    model.position.z = -0.28;
-
-    // ===================================================
-    // ARAH KARAKTER
-    // ===================================================
-
-    model.rotation.y = 0;
-
-    // ===================================================
-    // DATA
-    // ===================================================
-
-    model.userData.characterModel =
-      true;
-
+  if (
+    size.x <= 0 ||
+    size.y <= 0 ||
+    size.z <= 0
+  ) {
     return model;
   }
+
+  // ===================================================
+  // PUSATKAN MODEL
+  // ===================================================
+
+  const center =
+    box.getCenter(
+      new THREE.Vector3()
+    );
+
+  model.position.sub(center);
+
+  // ===================================================
+  // SCALE
+  // ===================================================
+
+  const targetHeight = 2.35;
+
+  const scale =
+    targetHeight / size.y;
+
+  model.scale.setScalar(scale);
+
+  // ===================================================
+  // HITUNG ULANG UKURAN
+  // ===================================================
+
+  const scaledBox =
+    new THREE.Box3()
+      .setFromObject(model);
+
+  const scaledHeight =
+    scaledBox.max.y -
+    scaledBox.min.y;
+
+  // ===================================================
+  // POSISI DI KURSI
+  // ===================================================
+
+  /*
+   * Kursi berada sekitar y = 1.0.
+   *
+   * Kita letakkan titik bawah model
+   * sedikit masuk ke area kursi.
+   */
+
+  const seatY = 0.98;
+
+  model.position.y +=
+    seatY -
+    scaledBox.min.y;
+
+  // Mundurkan sedikit
+  // agar posisi tubuh berada
+  // di tengah kursi.
+  model.position.z = -0.35;
+
+  // ===================================================
+  // POSE DUDUK
+  // ===================================================
+
+  model.traverse((object) => {
+    if (!object.isBone) {
+      return;
+    }
+
+    const name =
+      object.name.toLowerCase();
+
+    // -----------------------------------------------
+    // PANGGUL
+    // -----------------------------------------------
+
+    if (
+      name.includes('hip') ||
+      name.includes('pelvis')
+    ) {
+      object.rotation.x -= 0.25;
+    }
+
+    // -----------------------------------------------
+    // PAHA
+    // -----------------------------------------------
+
+    if (
+      name.includes('thigh') ||
+      name.includes('upleg') ||
+      name.includes('upperleg')
+    ) {
+      object.rotation.x += 0.9;
+    }
+
+    // -----------------------------------------------
+    // BETIS
+    // -----------------------------------------------
+
+    if (
+      name.includes('calf') ||
+      name.includes('lowerleg') ||
+      name.includes('shin')
+    ) {
+      object.rotation.x -= 1.0;
+    }
+
+    // -----------------------------------------------
+    // TANGAN
+    // -----------------------------------------------
+
+    if (
+      name.includes('upperarm') ||
+      name.includes('arm')
+    ) {
+      object.rotation.x += 0.25;
+    }
+
+    // -----------------------------------------------
+    // LENGAN BAWAH
+    // -----------------------------------------------
+
+    if (
+      name.includes('forearm') ||
+      name.includes('lowerarm')
+    ) {
+      object.rotation.x += 0.35;
+    }
+  });
+
+  // ===================================================
+  // ARAH KARAKTER
+  // ===================================================
+
+  model.rotation.y = 0;
+
+  // ===================================================
+  // DATA
+  // ===================================================
+
+  model.userData.characterModel = true;
+
+  return model;
+}
 
   // =====================================================
   // RESET
