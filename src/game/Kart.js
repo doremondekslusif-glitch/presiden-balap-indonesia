@@ -40,17 +40,22 @@ export class Kart {
   makeMesh() {
     const kart = new THREE.Group();
 
-    const paint =
+    // ==========================================================
+    // MATERIAL
+    // ==========================================================
+
+    const paintMaterial =
       new THREE.MeshStandardMaterial({
         color: this.character.color,
         roughness: 0.28,
         metalness: 0.25
       });
 
-    const black =
+    const darkMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x15171b,
-        roughness: 0.75
+        roughness: 0.75,
+        metalness: 0.05
       });
 
     // ==========================================================
@@ -63,10 +68,15 @@ export class Kart {
         0.42,
         3.35
       ),
-      paint
+      paintMaterial
     );
 
-    body.position.y = 0.62;
+    body.position.set(
+      0,
+      0.62,
+      0
+    );
+
     body.castShadow = true;
     body.receiveShadow = true;
 
@@ -82,7 +92,7 @@ export class Kart {
         0.28,
         0.7
       ),
-      paint
+      paintMaterial
     );
 
     nose.position.set(
@@ -105,7 +115,7 @@ export class Kart {
         0.16,
         0.22
       ),
-      black
+      darkMaterial
     );
 
     bumper.position.set(
@@ -126,7 +136,7 @@ export class Kart {
         0.16,
         0.35
       ),
-      paint
+      paintMaterial
     );
 
     spoiler.position.set(
@@ -148,7 +158,7 @@ export class Kart {
           0.7,
           0.1
         ),
-        black
+        darkMaterial
       );
 
       post.position.set(
@@ -170,7 +180,7 @@ export class Kart {
         0.66,
         1.05
       ),
-      black
+      darkMaterial
     );
 
     seat.position.set(
@@ -196,7 +206,7 @@ export class Kart {
             0.3,
             12
           ),
-          black
+          darkMaterial
         );
 
         wheel.rotation.z =
@@ -209,6 +219,7 @@ export class Kart {
         );
 
         wheel.userData.wheel = true;
+
         wheel.castShadow = true;
 
         kart.add(wheel);
@@ -226,7 +237,7 @@ export class Kart {
         7,
         12
       ),
-      black
+      darkMaterial
     );
 
     steering.rotation.x =
@@ -261,22 +272,23 @@ export class Kart {
   // ============================================================
 
   addGenericCharacter(kart) {
-    const skin =
+    const skinMaterial =
       new THREE.MeshStandardMaterial({
         color: 0xe8ae82,
         roughness: 0.8
       });
 
-    const shirt =
+    const shirtMaterial =
       new THREE.MeshStandardMaterial({
         color: this.character.color,
         roughness: 0.7
       });
 
-    const dark =
+    const darkMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x15171b,
-        roughness: 0.75
+        roughness: 0.75,
+        metalness: 0.05
       });
 
     // TORSO
@@ -287,7 +299,7 @@ export class Kart {
         0.8,
         8
       ),
-      shirt
+      shirtMaterial
     );
 
     torso.position.set(
@@ -307,7 +319,7 @@ export class Kart {
         12,
         10
       ),
-      skin
+      skinMaterial
     );
 
     head.position.set(
@@ -331,7 +343,7 @@ export class Kart {
         0,
         Math.PI / 2
       ),
-      dark
+      darkMaterial
     );
 
     hair.position.set(
@@ -353,7 +365,7 @@ export class Kart {
           0.65,
           7
         ),
-        skin
+        skinMaterial
       );
 
       arm.position.set(
@@ -376,7 +388,7 @@ export class Kart {
           0.7,
           7
         ),
-        dark
+        darkMaterial
       );
 
       leg.position.set(
@@ -395,7 +407,7 @@ export class Kart {
   }
 
   // ============================================================
-  // LOAD GLB
+  // LOAD CHARACTER MODEL
   // ============================================================
 
   loadCharacterModel(
@@ -407,13 +419,14 @@ export class Kart {
       modelPath
     );
 
+    // MODEL SUDAH ADA DI CACHE
     if (modelCache.has(modelPath)) {
-      const cached =
+      const sourceModel =
         modelCache.get(modelPath);
 
       const model =
         this.prepareCharacter(
-          cached.clone(true)
+          sourceModel.clone(true)
         );
 
       kart.add(model);
@@ -421,6 +434,7 @@ export class Kart {
       return;
     }
 
+    // MODEL SEDANG DIMUAT
     if (modelLoading.has(modelPath)) {
       modelLoading
         .get(modelPath)
@@ -439,6 +453,7 @@ export class Kart {
       return;
     }
 
+    // MULAI LOAD
     const loadingPromise =
       new Promise(
         (resolve, reject) => {
@@ -451,10 +466,7 @@ export class Kart {
                 modelPath
               );
 
-              const sourceModel =
-                gltf.scene;
-
-              if (!sourceModel) {
+              if (!gltf.scene) {
                 reject(
                   new Error(
                     'GLB tidak mempunyai scene'
@@ -466,11 +478,11 @@ export class Kart {
 
               modelCache.set(
                 modelPath,
-                sourceModel
+                gltf.scene
               );
 
               resolve(
-                sourceModel
+                gltf.scene
               );
             },
 
@@ -517,7 +529,7 @@ export class Kart {
   }
 
   // ============================================================
-  // PREPARE GLB
+  // PREPARE CHARACTER
   // ============================================================
 
   prepareCharacter(model) {
@@ -737,17 +749,17 @@ export class Kart {
       );
 
     // ==========================================================
-    // BELok
+    // STEERING
     // ==========================================================
 
     let steer = 0;
 
-    // A / ARROW LEFT
+    // A / PANAH KIRI
     if (left) {
       steer -= 1;
     }
 
-    // D / ARROW RIGHT
+    // D / PANAH KANAN
     if (right) {
       steer += 1;
     }
