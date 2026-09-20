@@ -31,9 +31,9 @@ export class Track {
 
     const n = this.samples;
 
-    // =========================================
+    // ==================================================
     // GROUND
-    // =========================================
+    // ==================================================
 
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(230, 190),
@@ -49,9 +49,9 @@ export class Track {
 
     group.add(ground);
 
-    // =========================================
+    // ==================================================
     // TRACK EDGE POINTS
-    // =========================================
+    // ==================================================
 
     const left = [];
     const right = [];
@@ -59,38 +59,37 @@ export class Track {
     for (let i = 0; i < n; i++) {
       const p = this.points[i];
 
-      const q =
-        this.points[
-          (i + 1) % n
-        ];
-
-      const direction = q
-        .clone()
-        .sub(p)
-        .normalize();
+      const tangent =
+        this.curve
+          .getTangentAt(i / n)
+          .normalize();
 
       const side = new THREE.Vector3(
-        -direction.z,
+        -tangent.z,
         0,
-        direction.x
-      )
-        .normalize()
-        .multiplyScalar(
-          this.spec.width / 2
-        );
+        tangent.x
+      );
 
       left.push(
-        p.clone().add(side)
+        p.clone().add(
+          side.clone().multiplyScalar(
+            this.spec.width / 2
+          )
+        )
       );
 
       right.push(
-        p.clone().sub(side)
+        p.clone().sub(
+          side.clone().multiplyScalar(
+            this.spec.width / 2
+          )
+        )
       );
     }
 
-    // =========================================
+    // ==================================================
     // ROAD
-    // =========================================
+    // ==================================================
 
     const roadShape = new THREE.Shape();
 
@@ -129,76 +128,47 @@ export class Track {
       })
     );
 
-    road.rotation.x = -Math.PI / 2;
+    road.rotation.x =
+      -Math.PI / 2;
+
     road.position.y = 0.01;
     road.receiveShadow = true;
 
     group.add(road);
 
-    // =========================================
+    // ==================================================
+    // KERB MERAH PUTIH
+    // ==================================================
+
+    this.addKerbs(
+      group,
+      left,
+      right
+    );
+
+    // ==================================================
+    // PEMBATAS / GUARDRAIL
+    // ==================================================
+
+    this.addGuardRails(
+      group,
+      left,
+      right
+    );
+
+    // ==================================================
     // EDGE MARKERS
-    // =========================================
+    // ==================================================
 
-    const edgeMat =
-      new THREE.MeshBasicMaterial({
-        color: 0xf5f5ef
-      });
+    this.addEdgeMarkers(
+      group,
+      left,
+      right
+    );
 
-    for (
-      let i = 0;
-      i < n;
-      i += 4
-    ) {
-      const p =
-        this.points[i];
-
-      const q =
-        this.points[
-          (i + 1) % n
-        ];
-
-      const direction = q
-        .clone()
-        .sub(p)
-        .normalize();
-
-      const rotation =
-        -Math.atan2(
-          direction.z,
-          direction.x
-        );
-
-      for (const edge of [
-        left,
-        right
-      ]) {
-        const marker =
-          new THREE.Mesh(
-            new THREE.BoxGeometry(
-              0.45,
-              0.05,
-              1.4
-            ),
-            edgeMat
-          );
-
-        marker.position.copy(
-          edge[i]
-        );
-
-        marker.position.y =
-          0.06;
-
-        marker.rotation.y =
-          rotation;
-
-        group.add(marker);
-      }
-    }
-
-    // =========================================
+    // ==================================================
     // START / FINISH LINE
-    // =========================================
+    // ==================================================
 
     const start =
       this.points[0];
@@ -223,7 +193,7 @@ export class Track {
     );
 
     startLine.position.y =
-      0.07;
+      0.08;
 
     startLine.rotation.y =
       -Math.atan2(
@@ -233,19 +203,9 @@ export class Track {
 
     group.add(startLine);
 
-    // =========================================
-    // TRACK RAILS
-    // =========================================
-
-    this.addRails(
-      group,
-      left,
-      right
-    );
-
-    // =========================================
+    // ==================================================
     // FINISH GATE
-    // =========================================
+    // ==================================================
 
     this.addFinishGate(
       group,
@@ -253,19 +213,9 @@ export class Track {
       tangent
     );
 
-    // =========================================
-    // BARRIERS
-    // =========================================
-
-    this.addBarriers(
-      group,
-      left,
-      right
-    );
-
-    // =========================================
+    // ==================================================
     // CONES
-    // =========================================
+    // ==================================================
 
     this.addCones(
       group,
@@ -273,9 +223,9 @@ export class Track {
       right
     );
 
-    // =========================================
+    // ==================================================
     // LIGHT POLES
-    // =========================================
+    // ==================================================
 
     this.addLightPoles(
       group,
@@ -283,94 +233,326 @@ export class Track {
       right
     );
 
-    // =========================================
+    // ==================================================
     // SIGNS
-    // =========================================
+    // ==================================================
 
     this.addSigns(
       group,
       left
     );
 
-    // =========================================
+    // ==================================================
     // SCENERY
-    // =========================================
+    // ==================================================
 
     this.addScenery(group);
   }
 
-  // =========================================
-  // RAILS
-  // =========================================
+  // ==================================================
+  // KERB
+  // ==================================================
 
-  addRails(
+  addKerbs(
     group,
     left,
     right
   ) {
-    const railMaterial =
+    const redMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0xd71920,
+        roughness: 0.8
+      });
+
+    const whiteMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 0.8
+      });
+
+    const createKerb = (
+      points
+    ) => {
+      for (
+        let i = 0;
+        i < this.samples;
+        i += 2
+      ) {
+        const p =
+          points[i];
+
+        const tangent =
+          this.curve
+            .getTangentAt(
+              i / this.samples
+            )
+            .normalize();
+
+        const side =
+          new THREE.Vector3(
+            -tangent.z,
+            0,
+            tangent.x
+          );
+
+        const next =
+          points[
+            (i + 2) %
+              this.samples
+          ];
+
+        const segmentLength =
+          p.distanceTo(next) + 0.15;
+
+        const offset =
+          side
+            .clone()
+            .multiplyScalar(0.15);
+
+        const kerb =
+          new THREE.Mesh(
+            new THREE.BoxGeometry(
+              segmentLength,
+              0.10,
+              0.85
+            ),
+            Math.floor(i / 2) % 2 === 0
+              ? redMaterial
+              : whiteMaterial
+          );
+
+        kerb.position.copy(
+          p.clone().add(offset)
+        );
+
+        kerb.position.y =
+          0.09;
+
+        kerb.rotation.y =
+          -Math.atan2(
+            tangent.z,
+            tangent.x
+          );
+
+        group.add(kerb);
+      }
+    };
+
+    createKerb(left);
+    createKerb(right);
+  }
+
+  // ==================================================
+  // CONTINUOUS GUARD RAIL
+  // ==================================================
+
+  addGuardRails(
+    group,
+    left,
+    right
+  ) {
+    const metalMaterial =
       new THREE.MeshStandardMaterial({
         color: 0xb7bdc5,
-        roughness: 0.7
+        roughness: 0.7,
+        metalness: 0.25
+      });
+
+    const postMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0x666b70,
+        roughness: 0.8
+      });
+
+    const createRail = (
+      points
+    ) => {
+      // -------------------------------
+      // RAIL UTAMA
+      // -------------------------------
+
+      const railGeometry =
+        new THREE.BufferGeometry();
+
+      const vertices = [];
+
+      const railHeight = 0.95;
+
+      for (
+        let i = 0;
+        i < this.samples;
+        i++
+      ) {
+        const p =
+          points[i];
+
+        vertices.push(
+          p.x,
+          railHeight,
+          p.z
+        );
+      }
+
+      railGeometry.setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(
+          vertices,
+          3
+        )
+      );
+
+      const railLine =
+        new THREE.Line(
+          railGeometry,
+          new THREE.LineBasicMaterial({
+            color: 0xb7bdc5
+          })
+        );
+
+      group.add(railLine);
+
+      // -------------------------------
+      // RAIL BAWAH
+      // -------------------------------
+
+      const lowerGeometry =
+        new THREE.BufferGeometry();
+
+      const lowerVertices = [];
+
+      for (
+        let i = 0;
+        i < this.samples;
+        i++
+      ) {
+        const p =
+          points[i];
+
+        lowerVertices.push(
+          p.x,
+          0.55,
+          p.z
+        );
+      }
+
+      lowerGeometry.setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(
+          lowerVertices,
+          3
+        )
+      );
+
+      const lowerRail =
+        new THREE.Line(
+          lowerGeometry,
+          new THREE.LineBasicMaterial({
+            color: 0x8f959b
+          })
+        );
+
+      group.add(lowerRail);
+
+      // -------------------------------
+      // TIANG
+      // -------------------------------
+
+      for (
+        let i = 0;
+        i < this.samples;
+        i += 8
+      ) {
+        const p =
+          points[i];
+
+        const post =
+          new THREE.Mesh(
+            new THREE.BoxGeometry(
+              0.12,
+              1.1,
+              0.12
+            ),
+            postMaterial
+          );
+
+        post.position.set(
+          p.x,
+          0.55,
+          p.z
+        );
+
+        group.add(post);
+      }
+    };
+
+    createRail(left);
+    createRail(right);
+  }
+
+  // ==================================================
+  // EDGE MARKERS
+  // ==================================================
+
+  addEdgeMarkers(
+    group,
+    left,
+    right
+  ) {
+    const material =
+      new THREE.MeshBasicMaterial({
+        color: 0xf5f5ef
       });
 
     for (
       let i = 0;
       i < this.samples;
-      i += 8
+      i += 5
     ) {
-      const p =
-        this.points[i];
-
-      const q =
-        this.points[
-          (i + 1) %
-            this.samples
-        ];
-
-      const direction = q
-        .clone()
-        .sub(p)
-        .normalize();
+      const tangent =
+        this.curve
+          .getTangentAt(
+            i / this.samples
+          )
+          .normalize();
 
       const rotation =
         -Math.atan2(
-          direction.z,
-          direction.x
+          tangent.z,
+          tangent.x
         );
 
       for (const edge of [
         left,
         right
       ]) {
-        const rail =
+        const marker =
           new THREE.Mesh(
             new THREE.BoxGeometry(
-              0.18,
-              0.45,
-              3
+              0.35,
+              0.05,
+              1.1
             ),
-            railMaterial
+            material
           );
 
-        rail.position.copy(
+        marker.position.copy(
           edge[i]
         );
 
-        rail.position.y =
-          0.35;
+        marker.position.y =
+          0.13;
 
-        rail.rotation.y =
+        marker.rotation.y =
           rotation;
 
-        group.add(rail);
+        group.add(marker);
       }
     }
   }
 
-  // =========================================
+  // ==================================================
   // FINISH GATE
-  // =========================================
+  // ==================================================
 
   addFinishGate(
     group,
@@ -385,9 +567,9 @@ export class Track {
     );
 
     gate.rotation.y =
-      Math.atan2(
-        tangent.x,
-        tangent.z
+      -Math.atan2(
+        tangent.z,
+        tangent.x
       );
 
     const metal =
@@ -424,7 +606,7 @@ export class Track {
 
     gate.add(rightPole);
 
-    // Bagian atas
+    // Atas
     const top =
       new THREE.Mesh(
         new THREE.BoxGeometry(
@@ -449,8 +631,7 @@ export class Track {
           0.12
         ),
         new THREE.MeshStandardMaterial({
-          color: 0xd71920,
-          roughness: 0.7
+          color: 0xd71920
         })
       );
 
@@ -459,17 +640,17 @@ export class Track {
 
     gate.add(banner);
 
-    // Kotak hitam putih
+    // Kotak hitam-putih
     for (
-      let i = -3;
-      i <= 3;
+      let i = -4;
+      i <= 4;
       i++
     ) {
       const square =
         new THREE.Mesh(
           new THREE.BoxGeometry(
-            0.7,
-            0.7,
+            0.65,
+            0.65,
             0.14
           ),
           new THREE.MeshBasicMaterial({
@@ -481,7 +662,7 @@ export class Track {
         );
 
       square.position.set(
-        i * 0.8,
+        i * 0.72,
         4.55,
         0
       );
@@ -492,110 +673,16 @@ export class Track {
     group.add(gate);
   }
 
-  // =========================================
-  // BARRIERS
-  // =========================================
-
-  addBarriers(
-    group,
-    left,
-    right
-  ) {
-    const barrierMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0xd9dce0,
-        roughness: 0.8
-      });
-
-    const stripeMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0xd92332
-      });
-
-    for (
-      let i = 6;
-      i < this.samples;
-      i += 8
-    ) {
-      const p =
-        this.points[i];
-
-      const q =
-        this.points[
-          (i + 1) %
-            this.samples
-        ];
-
-      const direction = q
-        .clone()
-        .sub(p)
-        .normalize();
-
-      const rotation =
-        -Math.atan2(
-          direction.z,
-          direction.x
-        );
-
-      for (const edge of [
-        left,
-        right
-      ]) {
-        const barrier =
-          new THREE.Group();
-
-        const base =
-          new THREE.Mesh(
-            new THREE.BoxGeometry(
-              2.6,
-              0.65,
-              0.55
-            ),
-            barrierMaterial
-          );
-
-        barrier.add(base);
-
-        const stripe =
-          new THREE.Mesh(
-            new THREE.BoxGeometry(
-              2.6,
-              0.16,
-              0.57
-            ),
-            stripeMaterial
-          );
-
-        stripe.position.y =
-          0.15;
-
-        barrier.add(stripe);
-
-        barrier.position.copy(
-          edge[i]
-        );
-
-        barrier.position.y =
-          0.33;
-
-        barrier.rotation.y =
-          rotation;
-
-        group.add(barrier);
-      }
-    }
-  }
-
-  // =========================================
+  // ==================================================
   // CONES
-  // =========================================
+  // ==================================================
 
   addCones(
     group,
     left,
     right
   ) {
-    const coneMaterial =
+    const material =
       new THREE.MeshStandardMaterial({
         color: 0xff6b00
       });
@@ -617,7 +704,7 @@ export class Track {
             0.8,
             8
           ),
-          coneMaterial
+          material
         );
 
       cone.position.copy(
@@ -631,9 +718,9 @@ export class Track {
     }
   }
 
-  // =========================================
+  // ==================================================
   // LIGHT POLES
-  // =========================================
+  // ==================================================
 
   addLightPoles(
     group,
@@ -660,7 +747,7 @@ export class Track {
           ? left
           : right;
 
-      const poleGroup =
+      const pole =
         new THREE.Group();
 
       const shaft =
@@ -677,7 +764,7 @@ export class Track {
       shaft.position.y =
         2.25;
 
-      poleGroup.add(shaft);
+      pole.add(shaft);
 
       const lamp =
         new THREE.Mesh(
@@ -692,19 +779,19 @@ export class Track {
       lamp.position.y =
         4.5;
 
-      poleGroup.add(lamp);
+      pole.add(lamp);
 
-      poleGroup.position.copy(
+      pole.position.copy(
         edge[i]
       );
 
-      group.add(poleGroup);
+      group.add(pole);
     }
   }
 
-  // =========================================
+  // ==================================================
   // SIGNS
-  // =========================================
+  // ==================================================
 
   addSigns(
     group,
@@ -769,9 +856,9 @@ export class Track {
     }
   }
 
-  // =========================================
+  // ==================================================
   // SCENERY
-  // =========================================
+  // ==================================================
 
   addScenery(group) {
     const trunkMaterial =
@@ -789,7 +876,10 @@ export class Track {
         color: 0x8bba45
       });
 
-    // Pohon
+    // -------------------------------
+    // POHON
+    // -------------------------------
+
     for (
       let i = 0;
       i < 52;
@@ -848,7 +938,10 @@ export class Track {
       group.add(crown);
     }
 
-    // Sawah
+    // -------------------------------
+    // SAWAH
+    // -------------------------------
+
     for (
       let x = -92;
       x < -52;
@@ -879,7 +972,10 @@ export class Track {
       }
     }
 
-    // Laut
+    // -------------------------------
+    // LAUT
+    // -------------------------------
+
     const ocean =
       new THREE.Mesh(
         new THREE.PlaneGeometry(
@@ -904,7 +1000,10 @@ export class Track {
 
     group.add(ocean);
 
-    // Gunung
+    // -------------------------------
+    // GUNUNG
+    // -------------------------------
+
     const mountain =
       new THREE.Mesh(
         new THREE.ConeGeometry(
@@ -926,9 +1025,9 @@ export class Track {
     group.add(mountain);
   }
 
-  // =========================================
+  // ==================================================
   // NEAREST
-  // =========================================
+  // ==================================================
 
   nearest(position) {
     let best = 0;
@@ -956,9 +1055,9 @@ export class Track {
     };
   }
 
-  // =========================================
+  // ==================================================
   // POINT
-  // =========================================
+  // ==================================================
 
   point(progress) {
     return this.curve.getPointAt(
