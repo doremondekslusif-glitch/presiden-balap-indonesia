@@ -1,3 +1,4 @@
+```js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -54,62 +55,114 @@ export class Kart {
 
     // BODY
     const body = new THREE.Mesh(
-      new THREE.BoxGeometry(2.15, 0.42, 3.35),
+      new THREE.BoxGeometry(
+        2.15,
+        0.42,
+        3.35
+      ),
       paint
     );
 
     body.position.y = 0.62;
     body.castShadow = true;
     body.receiveShadow = true;
+
     kart.add(body);
 
     // NOSE
     const nose = new THREE.Mesh(
-      new THREE.BoxGeometry(1.72, 0.28, 0.7),
+      new THREE.BoxGeometry(
+        1.72,
+        0.28,
+        0.7
+      ),
       paint
     );
 
-    nose.position.set(0, 0.56, 1.88);
+    nose.position.set(
+      0,
+      0.56,
+      1.88
+    );
+
     nose.castShadow = true;
+
     kart.add(nose);
 
     // BUMPER
     const bumper = new THREE.Mesh(
-      new THREE.BoxGeometry(2.38, 0.16, 0.22),
+      new THREE.BoxGeometry(
+        2.38,
+        0.16,
+        0.22
+      ),
       black
     );
 
-    bumper.position.set(0, 0.43, 2.23);
+    bumper.position.set(
+      0,
+      0.43,
+      2.23
+    );
+
     kart.add(bumper);
 
     // SPOILER
     const spoiler = new THREE.Mesh(
-      new THREE.BoxGeometry(1.8, 0.16, 0.35),
+      new THREE.BoxGeometry(
+        1.8,
+        0.16,
+        0.35
+      ),
       paint
     );
 
-    spoiler.position.set(0, 1.32, -1.5);
+    spoiler.position.set(
+      0,
+      1.32,
+      -1.5
+    );
+
     kart.add(spoiler);
 
     // SPOILER POSTS
     for (const x of [-0.9, 0.9]) {
       const post = new THREE.Mesh(
-        new THREE.BoxGeometry(0.1, 0.7, 0.1),
+        new THREE.BoxGeometry(
+          0.1,
+          0.7,
+          0.1
+        ),
         black
       );
 
-      post.position.set(x, 1.02, -1.43);
+      post.position.set(
+        x,
+        1.02,
+        -1.43
+      );
+
       kart.add(post);
     }
 
     // SEAT
     const seat = new THREE.Mesh(
-      new THREE.BoxGeometry(1.1, 0.66, 1.05),
+      new THREE.BoxGeometry(
+        1.1,
+        0.66,
+        1.05
+      ),
       black
     );
 
-    seat.position.set(0, 1.0, -0.22);
+    seat.position.set(
+      0,
+      1.0,
+      -0.22
+    );
+
     seat.castShadow = true;
+
     kart.add(seat);
 
     // WHEELS
@@ -125,7 +178,8 @@ export class Kart {
           black
         );
 
-        wheel.rotation.z = Math.PI / 2;
+        wheel.rotation.z =
+          Math.PI / 2;
 
         wheel.position.set(
           x,
@@ -151,7 +205,8 @@ export class Kart {
       black
     );
 
-    steering.rotation.x = Math.PI / 2;
+    steering.rotation.x =
+      Math.PI / 2;
 
     steering.position.set(
       0,
@@ -187,6 +242,7 @@ export class Kart {
         roughness: 0.7
       });
 
+    // TORSO
     const torso = new THREE.Mesh(
       new THREE.CylinderGeometry(
         0.34,
@@ -204,8 +260,10 @@ export class Kart {
     );
 
     torso.castShadow = true;
+
     kart.add(torso);
 
+    // HEAD
     const head = new THREE.Mesh(
       new THREE.SphereGeometry(
         0.36,
@@ -222,8 +280,10 @@ export class Kart {
     );
 
     head.castShadow = true;
+
     kart.add(head);
 
+    // HAIR
     const hair = new THREE.Mesh(
       new THREE.SphereGeometry(
         0.38,
@@ -246,8 +306,10 @@ export class Kart {
     );
 
     hair.castShadow = true;
+
     kart.add(hair);
 
+    // ARMS + LEGS
     for (const x of [-0.38, 0.38]) {
       const arm = new THREE.Mesh(
         new THREE.CylinderGeometry(
@@ -269,6 +331,7 @@ export class Kart {
         x * 0.8;
 
       arm.castShadow = true;
+
       kart.add(arm);
 
       const leg = new THREE.Mesh(
@@ -293,6 +356,7 @@ export class Kart {
         Math.PI / 2;
 
       leg.castShadow = true;
+
       kart.add(leg);
     }
   }
@@ -368,7 +432,9 @@ export class Kart {
                 sourceModel
               );
 
-              resolve(sourceModel);
+              resolve(
+                sourceModel
+              );
             },
 
             undefined,
@@ -470,6 +536,7 @@ export class Kart {
       bottomBox.min.y;
 
     model.position.y = 0.95;
+
     model.position.z = -0.35;
 
     model.rotation.set(
@@ -485,7 +552,10 @@ export class Kart {
   // RESET
   // ============================================================
 
-  reset(position, heading) {
+  reset(
+    position,
+    heading
+  ) {
     this.mesh.position.copy(
       position
     );
@@ -510,7 +580,7 @@ export class Kart {
   }
 
   // ============================================================
-  // PLAYER CONTROL
+  // PLAYER
   // ============================================================
 
   updatePlayer(
@@ -553,14 +623,20 @@ export class Kart {
       this.boost > 0 &&
       this.speed > 2;
 
+    // ==========================================================
     // MAJU
+    // ==========================================================
+
     if (forward) {
       this.speed +=
         this.acceleration *
         dt;
     }
 
-    // MUNDUR / REM
+    // ==========================================================
+    // REM / MUNDUR
+    // ==========================================================
+
     if (backward) {
       if (this.speed > 0) {
         this.speed -=
@@ -575,7 +651,10 @@ export class Kart {
       }
     }
 
+    // ==========================================================
     // FRICTION
+    // ==========================================================
+
     if (
       !forward &&
       !backward
@@ -587,7 +666,10 @@ export class Kart {
         );
     }
 
+    // ==========================================================
     // BOOST
+    // ==========================================================
+
     const topSpeed =
       this.maxSpeed *
       (
@@ -626,19 +708,19 @@ export class Kart {
       );
 
     // ==========================================================
-    // BELOK
+    // STEERING
     // ==========================================================
 
     let steer = 0;
 
-    // KIRI = +1
+    // KIRI
     if (left) {
-      steer += 1;
+      steer -= 1;
     }
 
-    // KANAN = -1
+    // KANAN
     if (right) {
-      steer -= 1;
+      steer += 1;
     }
 
     const steeringStrength =
@@ -767,10 +849,14 @@ export class Kart {
         this.mesh.position
       );
 
+    // ==========================================================
     // KELUAR JALUR
+    // ==========================================================
+
     if (
       nearest.distance >
-      track.spec.width * 0.52
+      track.spec.width *
+        0.52
     ) {
       const tangent =
         track.curve.getTangentAt(
@@ -822,10 +908,14 @@ export class Kart {
         0.12;
     }
 
+    // ==========================================================
     // TERLALU JAUH
+    // ==========================================================
+
     if (
       nearest.distance >
-      track.spec.width * 1.1
+      track.spec.width *
+        1.1
     ) {
       this.mesh.position.lerp(
         track.points[
@@ -838,11 +928,17 @@ export class Kart {
         0.75;
     }
 
-    // ROTASI KART
+    // ==========================================================
+    // ROTASI
+    // ==========================================================
+
     this.mesh.rotation.y =
       this.heading;
 
+    // ==========================================================
     // RODA
+    // ==========================================================
+
     this.mesh.traverse(
       (object) => {
         if (
@@ -856,17 +952,25 @@ export class Kart {
       }
     );
 
+    // ==========================================================
     // PROGRESS
+    // ==========================================================
+
     this.previousProgress =
       this.progress;
 
     this.progress =
       nearest.progress;
 
+    // ==========================================================
     // LAP
+    // ==========================================================
+
     if (
-      this.previousProgress > 0.88 &&
-      this.progress < 0.12 &&
+      this.previousProgress >
+        0.88 &&
+      this.progress <
+        0.12 &&
       this.speed > 2
     ) {
       this.lap++;
@@ -880,3 +984,4 @@ export class Kart {
         this.progress;
   }
 }
+```
