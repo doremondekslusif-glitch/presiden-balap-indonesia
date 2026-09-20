@@ -1,11 +1,7 @@
-```js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const gltfLoader = new GLTFLoader();
-
-const modelCache = new Map();
-const modelLoading = new Map();
 
 export class Kart {
   constructor(character, isPlayer = false) {
@@ -55,11 +51,7 @@ export class Kart {
 
     // BODY
     const body = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        2.15,
-        0.42,
-        3.35
-      ),
+      new THREE.BoxGeometry(2.15, 0.42, 3.35),
       paint
     );
 
@@ -71,96 +63,54 @@ export class Kart {
 
     // NOSE
     const nose = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        1.72,
-        0.28,
-        0.7
-      ),
+      new THREE.BoxGeometry(1.72, 0.28, 0.7),
       paint
     );
 
-    nose.position.set(
-      0,
-      0.56,
-      1.88
-    );
-
+    nose.position.set(0, 0.56, 1.88);
     nose.castShadow = true;
 
     kart.add(nose);
 
     // BUMPER
     const bumper = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        2.38,
-        0.16,
-        0.22
-      ),
+      new THREE.BoxGeometry(2.38, 0.16, 0.22),
       black
     );
 
-    bumper.position.set(
-      0,
-      0.43,
-      2.23
-    );
+    bumper.position.set(0, 0.43, 2.23);
 
     kart.add(bumper);
 
     // SPOILER
     const spoiler = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        1.8,
-        0.16,
-        0.35
-      ),
+      new THREE.BoxGeometry(1.8, 0.16, 0.35),
       paint
     );
 
-    spoiler.position.set(
-      0,
-      1.32,
-      -1.5
-    );
+    spoiler.position.set(0, 1.32, -1.5);
 
     kart.add(spoiler);
 
     // SPOILER POSTS
     for (const x of [-0.9, 0.9]) {
       const post = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.1,
-          0.7,
-          0.1
-        ),
+        new THREE.BoxGeometry(0.1, 0.7, 0.1),
         black
       );
 
-      post.position.set(
-        x,
-        1.02,
-        -1.43
-      );
+      post.position.set(x, 1.02, -1.43);
 
       kart.add(post);
     }
 
     // SEAT
     const seat = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        1.1,
-        0.66,
-        1.05
-      ),
+      new THREE.BoxGeometry(1.1, 0.66, 1.05),
       black
     );
 
-    seat.position.set(
-      0,
-      1.0,
-      -0.22
-    );
-
+    seat.position.set(0, 1.0, -0.22);
     seat.castShadow = true;
 
     kart.add(seat);
@@ -178,8 +128,7 @@ export class Kart {
           black
         );
 
-        wheel.rotation.z =
-          Math.PI / 2;
+        wheel.rotation.z = Math.PI / 2;
 
         wheel.position.set(
           x,
@@ -205,8 +154,7 @@ export class Kart {
       black
     );
 
-    steering.rotation.x =
-      Math.PI / 2;
+    steering.rotation.x = Math.PI / 2;
 
     steering.position.set(
       0,
@@ -242,7 +190,6 @@ export class Kart {
         roughness: 0.7
       });
 
-    // TORSO
     const torso = new THREE.Mesh(
       new THREE.CylinderGeometry(
         0.34,
@@ -263,7 +210,6 @@ export class Kart {
 
     kart.add(torso);
 
-    // HEAD
     const head = new THREE.Mesh(
       new THREE.SphereGeometry(
         0.36,
@@ -283,7 +229,6 @@ export class Kart {
 
     kart.add(head);
 
-    // HAIR
     const hair = new THREE.Mesh(
       new THREE.SphereGeometry(
         0.38,
@@ -309,7 +254,6 @@ export class Kart {
 
     kart.add(hair);
 
-    // ARMS + LEGS
     for (const x of [-0.38, 0.38]) {
       const arm = new THREE.Mesh(
         new THREE.CylinderGeometry(
@@ -330,8 +274,6 @@ export class Kart {
       arm.rotation.z =
         x * 0.8;
 
-      arm.castShadow = true;
-
       kart.add(arm);
 
       const leg = new THREE.Mesh(
@@ -341,9 +283,7 @@ export class Kart {
           0.7,
           7
         ),
-        new THREE.MeshStandardMaterial({
-          color: 0x15171b
-        })
+        black
       );
 
       leg.position.set(
@@ -355,128 +295,45 @@ export class Kart {
       leg.rotation.x =
         Math.PI / 2;
 
-      leg.castShadow = true;
-
       kart.add(leg);
     }
   }
 
-  loadCharacterModel(
-    kart,
-    modelPath
-  ) {
+  loadCharacterModel(kart, modelPath) {
     console.log(
       'LOAD CHARACTER:',
       modelPath
     );
 
-    if (modelCache.has(modelPath)) {
-      const cached =
-        modelCache.get(modelPath);
+    gltfLoader.load(
+      modelPath,
 
-      const model =
-        this.prepareCharacter(
-          cached.clone(true)
+      (gltf) => {
+        console.log(
+          'MODEL BERHASIL DIMUAT:',
+          modelPath
         );
 
-      kart.add(model);
-
-      return;
-    }
-
-    if (modelLoading.has(modelPath)) {
-      modelLoading
-        .get(modelPath)
-        .then((sourceModel) => {
-          const model =
-            this.prepareCharacter(
-              sourceModel.clone(true)
-            );
-
-          kart.add(model);
-        })
-        .catch(() => {
-          this.addGenericCharacter(kart);
-        });
-
-      return;
-    }
-
-    const loadingPromise =
-      new Promise(
-        (resolve, reject) => {
-          gltfLoader.load(
-            modelPath,
-
-            (gltf) => {
-              console.log(
-                'MODEL BERHASIL DIMUAT:',
-                modelPath
-              );
-
-              const sourceModel =
-                gltf.scene;
-
-              if (!sourceModel) {
-                reject(
-                  new Error(
-                    'GLB tidak mempunyai scene'
-                  )
-                );
-
-                return;
-              }
-
-              modelCache.set(
-                modelPath,
-                sourceModel
-              );
-
-              resolve(
-                sourceModel
-              );
-            },
-
-            undefined,
-
-            (error) => {
-              console.error(
-                'GAGAL LOAD MODEL:',
-                modelPath,
-                error
-              );
-
-              reject(error);
-            }
-          );
-        }
-      );
-
-    modelLoading.set(
-      modelPath,
-      loadingPromise
-    );
-
-    loadingPromise
-      .then((sourceModel) => {
         const model =
           this.prepareCharacter(
-            sourceModel.clone(true)
+            gltf.scene
           );
 
         kart.add(model);
+      },
 
-        modelLoading.delete(
-          modelPath
-        );
-      })
-      .catch(() => {
-        modelLoading.delete(
-          modelPath
+      undefined,
+
+      (error) => {
+        console.error(
+          'GAGAL LOAD MODEL:',
+          modelPath,
+          error
         );
 
         this.addGenericCharacter(kart);
-      });
+      }
+    );
   }
 
   prepareCharacter(model) {
@@ -506,9 +363,7 @@ export class Kart {
       const scale =
         targetHeight / size.y;
 
-      model.scale.setScalar(
-        scale
-      );
+      model.scale.setScalar(scale);
     }
 
     const scaledBox =
@@ -521,50 +376,30 @@ export class Kart {
         new THREE.Vector3()
       );
 
-    model.position.x -=
-      center.x;
-
-    model.position.z -=
-      center.z;
+    model.position.x -= center.x;
+    model.position.z -= center.z;
 
     const bottomBox =
       new THREE.Box3().setFromObject(
         model
       );
 
-    model.position.y -=
-      bottomBox.min.y;
+    model.position.y -= bottomBox.min.y;
 
     model.position.y = 0.95;
-
     model.position.z = -0.35;
 
-    model.rotation.set(
-      0,
-      0,
-      0
-    );
+    model.rotation.set(0, 0, 0);
 
     return model;
   }
 
-  // ============================================================
-  // RESET
-  // ============================================================
+  reset(position, heading) {
+    this.mesh.position.copy(position);
 
-  reset(
-    position,
-    heading
-  ) {
-    this.mesh.position.copy(
-      position
-    );
+    this.mesh.rotation.y = heading;
 
-    this.mesh.rotation.y =
-      heading;
-
-    this.heading =
-      heading;
+    this.heading = heading;
 
     this.speed = 0;
 
@@ -579,15 +414,7 @@ export class Kart {
     this.boost = 100;
   }
 
-  // ============================================================
-  // PLAYER
-  // ============================================================
-
-  updatePlayer(
-    dt,
-    input,
-    track
-  ) {
+  updatePlayer(dt, input, track) {
     const forward =
       input.keys.has('KeyW') ||
       input.keys.has('ArrowUp') ||
@@ -623,19 +450,10 @@ export class Kart {
       this.boost > 0 &&
       this.speed > 2;
 
-    // ==========================================================
-    // MAJU
-    // ==========================================================
-
     if (forward) {
       this.speed +=
-        this.acceleration *
-        dt;
+        this.acceleration * dt;
     }
-
-    // ==========================================================
-    // REM / MUNDUR
-    // ==========================================================
 
     if (backward) {
       if (this.speed > 0) {
@@ -651,14 +469,7 @@ export class Kart {
       }
     }
 
-    // ==========================================================
-    // FRICTION
-    // ==========================================================
-
-    if (
-      !forward &&
-      !backward
-    ) {
+    if (!forward && !backward) {
       this.speed *=
         Math.pow(
           0.985,
@@ -666,16 +477,11 @@ export class Kart {
         );
     }
 
-    // ==========================================================
-    // BOOST
-    // ==========================================================
-
     const topSpeed =
       this.maxSpeed *
       (
         boosting
-          ? 1.65 *
-            this.boostPower
+          ? 1.65 * this.boostPower
           : 1
       );
 
@@ -695,8 +501,7 @@ export class Kart {
       this.boost =
         Math.min(
           100,
-          this.boost +
-            8 * dt
+          this.boost + 8 * dt
         );
     }
 
@@ -707,18 +512,15 @@ export class Kart {
         topSpeed
       );
 
-    // ==========================================================
-    // STEERING
-    // ==========================================================
-
+    // BELok
     let steer = 0;
 
-    // KIRI
+    // A / LEFT
     if (left) {
       steer -= 1;
     }
 
-    // KANAN
+    // D / RIGHT
     if (right) {
       steer += 1;
     }
@@ -748,15 +550,7 @@ export class Kart {
     );
   }
 
-  // ============================================================
-  // AI
-  // ============================================================
-
-  updateAI(
-    dt,
-    track,
-    target
-  ) {
+  updateAI(dt, track, target) {
     if (this.finished) {
       return;
     }
@@ -766,9 +560,7 @@ export class Kart {
 
     const direction =
       targetPoint
-        .sub(
-          this.mesh.position
-        )
+        .sub(this.mesh.position)
         .normalize();
 
     const desiredHeading =
@@ -781,18 +573,12 @@ export class Kart {
       desiredHeading -
       this.heading;
 
-    while (
-      difference > Math.PI
-    ) {
-      difference -=
-        Math.PI * 2;
+    while (difference > Math.PI) {
+      difference -= Math.PI * 2;
     }
 
-    while (
-      difference < -Math.PI
-    ) {
-      difference +=
-        Math.PI * 2;
+    while (difference < -Math.PI) {
+      difference += Math.PI * 2;
     }
 
     this.heading +=
@@ -803,14 +589,12 @@ export class Kart {
       );
 
     this.speed +=
-      this.acceleration *
-      dt;
+      this.acceleration * dt;
 
     this.speed =
       Math.min(
         this.speed,
-        this.maxSpeed *
-          0.82
+        this.maxSpeed * 0.82
       );
 
     this.move(
@@ -819,44 +603,27 @@ export class Kart {
     );
   }
 
-  // ============================================================
-  // MOVEMENT
-  // ============================================================
-
-  move(
-    dt,
-    track
-  ) {
+  move(dt, track) {
     const forward =
       new THREE.Vector3(
-        Math.sin(
-          this.heading
-        ),
+        Math.sin(this.heading),
         0,
-        Math.cos(
-          this.heading
-        )
+        Math.cos(this.heading)
       );
 
-    this.mesh.position
-      .addScaledVector(
-        forward,
-        this.speed * dt
-      );
+    this.mesh.position.addScaledVector(
+      forward,
+      this.speed * dt
+    );
 
     const nearest =
       track.nearest(
         this.mesh.position
       );
 
-    // ==========================================================
-    // KELUAR JALUR
-    // ==========================================================
-
     if (
       nearest.distance >
-      track.spec.width *
-        0.52
+      track.spec.width * 0.52
     ) {
       const tangent =
         track.curve.getTangentAt(
@@ -898,8 +665,7 @@ export class Kart {
           safe
         );
 
-      this.speed *=
-        0.48;
+      this.speed *= 0.48;
 
       this.heading +=
         Math.sign(
@@ -908,14 +674,9 @@ export class Kart {
         0.12;
     }
 
-    // ==========================================================
-    // TERLALU JAUH
-    // ==========================================================
-
     if (
       nearest.distance >
-      track.spec.width *
-        1.1
+      track.spec.width * 1.1
     ) {
       this.mesh.position.lerp(
         track.points[
@@ -924,26 +685,15 @@ export class Kart {
         dt * 1.8
       );
 
-      this.speed *=
-        0.75;
+      this.speed *= 0.75;
     }
-
-    // ==========================================================
-    // ROTASI
-    // ==========================================================
 
     this.mesh.rotation.y =
       this.heading;
 
-    // ==========================================================
-    // RODA
-    // ==========================================================
-
     this.mesh.traverse(
       (object) => {
-        if (
-          object.userData.wheel
-        ) {
+        if (object.userData.wheel) {
           object.rotation.y -=
             this.speed *
             dt *
@@ -952,25 +702,15 @@ export class Kart {
       }
     );
 
-    // ==========================================================
-    // PROGRESS
-    // ==========================================================
-
     this.previousProgress =
       this.progress;
 
     this.progress =
       nearest.progress;
 
-    // ==========================================================
-    // LAP
-    // ==========================================================
-
     if (
-      this.previousProgress >
-        0.88 &&
-      this.progress <
-        0.12 &&
+      this.previousProgress > 0.88 &&
+      this.progress < 0.12 &&
       this.speed > 2
     ) {
       this.lap++;
@@ -980,8 +720,6 @@ export class Kart {
   score() {
     return this.finished
       ? 9999 + this.lap
-      : this.lap +
-        this.progress;
+      : this.lap + this.progress;
   }
 }
-```
