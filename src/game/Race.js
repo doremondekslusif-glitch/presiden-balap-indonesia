@@ -104,9 +104,22 @@ export class Race {
           heading
         );
 
-        kart.progress = 0;
+        // Mulai dari posisi progress yang benar-benar sesuai
+        // dengan posisi grid, bukan selalu progress 0.
+        const startProgress =
+          this.track.nearest(
+            startPosition
+          ).progress;
 
-        kart.lap = 1;
+        kart.progress =
+          startProgress;
+
+        kart.previousProgress =
+          startProgress;
+
+        // lap = jumlah lap yang sudah selesai.
+        // 0 berarti sedang menjalani LAP 1.
+        kart.lap = 0;
 
         kart.finished = false;
       }
