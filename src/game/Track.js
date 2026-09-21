@@ -212,10 +212,12 @@ export class Track {
     startLine.position.y =
       0.08;
 
+    // Lebar garis harus melintang terhadap arah jalan.
+    // Local-X BoxGeometry diputar mengikuti sisi kiri/kanan track.
     startLine.rotation.y =
-      -Math.atan2(
-        tangent.z,
-        tangent.x
+      Math.atan2(
+        tangent.x,
+        tangent.z
       );
 
     group.add(startLine);
@@ -583,10 +585,12 @@ export class Track {
       position
     );
 
+    // Arah local-X gate mengikuti lebar jalan,
+    // sehingga kedua kaki berada di luar kiri/kanan track.
     gate.rotation.y =
-      -Math.atan2(
-        tangent.z,
-        tangent.x
+      Math.atan2(
+        tangent.x,
+        tangent.z
       );
 
     const metal =
@@ -606,8 +610,11 @@ export class Track {
         metal
       );
 
+    const gateHalfWidth =
+      this.spec.width / 2 + 0.65;
+
     leftPole.position.set(
-      -(this.spec.width / 2),
+      -gateHalfWidth,
       2.75,
       0
     );
@@ -619,7 +626,7 @@ export class Track {
       leftPole.clone();
 
     rightPole.position.x =
-      this.spec.width / 2;
+      gateHalfWidth;
 
     gate.add(rightPole);
 
@@ -627,7 +634,7 @@ export class Track {
     const top =
       new THREE.Mesh(
         new THREE.BoxGeometry(
-          this.spec.width + 1,
+          this.spec.width + 1.3,
           0.5,
           0.6
         ),
@@ -643,7 +650,7 @@ export class Track {
     const banner =
       new THREE.Mesh(
         new THREE.BoxGeometry(
-          this.spec.width - 1,
+          this.spec.width + 0.2,
           1.5,
           0.12
         ),
