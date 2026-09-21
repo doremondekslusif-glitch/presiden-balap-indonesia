@@ -5,6 +5,24 @@ export class Hud {
 
     this.map = this.$('#map');
     this.ctx = this.map.getContext('2d');
+
+    // Ikon wajah karakter dirender dari model GLB
+    // dan dipakai sebagai marker di minimap.
+    this.characterIcons = new Map();
+  }
+
+  setCharacterIcon(characterId, imageSource) {
+    if (!characterId || !imageSource) {
+      return;
+    }
+
+    const image = new Image();
+
+    image.onload = () => {
+      this.characterIcons.set(characterId, image);
+    };
+
+    image.src = imageSource;
   }
 
   update(race) {
@@ -72,24 +90,81 @@ export class Hud {
     c.stroke();
 
     race.karts.forEach((kart) => {
-      c.fillStyle =
-        kart === player
-          ? '#e63946'
-          : '#e9eef5';
-
-      c.beginPath();
-
-      c.arc(
+      const x =
         w / 2 +
-          kart.mesh.position.x * 1.35,
-        h / 2 +
-          kart.mesh.position.z * 1.35,
-        kart === player ? 5 : 3,
-        0,
-        7
-      );
+        kart.mesh.position.x * 1.35;
 
-      c.fill();
+      const y =
+        h / 2 +
+        kart.mesh.position.z * 1.35;
+
+      const icon =
+        this.characterIcons.get(
+          kart.character.id
+        );
+
+      const radius =
+        kart === player ? 11 : 9;
+
+      if (icon && icon.complete) {
+        c.save();
+
+        c.beginPath();
+        c.arc(
+          x,
+          y,
+          radius,
+          0,
+          Math.PI * 2
+        );
+        c.clip();
+
+        c.drawImage(
+          icon,
+          x - radius,
+          y - radius,
+          radius * 2,
+          radius * 2
+        );
+
+        c.restore();
+
+        c.beginPath();
+        c.arc(
+          x,
+          y,
+          radius,
+          0,
+          Math.PI * 2
+        );
+
+        c.lineWidth =
+          kart === player ? 2.5 : 1.5;
+
+        c.strokeStyle =
+          kart === player
+            ? '#f5c541'
+            : '#ffffff';
+
+        c.stroke();
+      } else {
+        c.fillStyle =
+          kart === player
+            ? '#e63946'
+            : '#e9eef5';
+
+        c.beginPath();
+
+        c.arc(
+          x,
+          y,
+          kart === player ? 5 : 3,
+          0,
+          Math.PI * 2
+        );
+
+        c.fill();
+      }
     });
   }
 }
