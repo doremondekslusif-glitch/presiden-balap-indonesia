@@ -91,47 +91,64 @@ export class Track {
     // ROAD
     // ==================================================
 
-    const roadShape = new THREE.Shape();
+    // Gunakan strip mesh langsung dari pasangan
+    // kiri/kanan agar permukaan jalan benar-benar rata
+    // dan tidak mengalami triangulasi ShapeGeometry yang aneh.
+    const roadVertices = [];
+    const roadIndices = [];
 
-    roadShape.moveTo(
-      left[0].x,
-      left[0].z
-    );
-
-    for (let i = 1; i < n; i++) {
-      roadShape.lineTo(
+    for (let i = 0; i < n; i++) {
+      roadVertices.push(
         left[i].x,
-        left[i].z
-      );
-    }
+        0.025,
+        left[i].z,
 
-    for (
-      let i = n - 1;
-      i >= 0;
-      i--
-    ) {
-      roadShape.lineTo(
         right[i].x,
+        0.025,
         right[i].z
       );
     }
 
-    roadShape.closePath();
+    for (let i = 0; i < n; i++) {
+      const next = (i + 1) % n;
+
+      const li = i * 2;
+      const ri = i * 2 + 1;
+      const ln = next * 2;
+      const rn = next * 2 + 1;
+
+      roadIndices.push(
+        li, ln, ri,
+        ri, ln, rn
+      );
+    }
+
+    const roadGeometry =
+      new THREE.BufferGeometry();
+
+    roadGeometry.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(
+        roadVertices,
+        3
+      )
+    );
+
+    roadGeometry.setIndex(
+      roadIndices
+    );
+
+    roadGeometry.computeVertexNormals();
 
     const road = new THREE.Mesh(
-      new THREE.ShapeGeometry(
-        roadShape
-      ),
+      roadGeometry,
       new THREE.MeshStandardMaterial({
         color: 0x30343b,
-        roughness: 0.9
+        roughness: 0.9,
+        side: THREE.DoubleSide
       })
     );
 
-    road.rotation.x =
-      -Math.PI / 2;
-
-    road.position.y = 0.01;
     road.receiveShadow = true;
 
     group.add(road);
