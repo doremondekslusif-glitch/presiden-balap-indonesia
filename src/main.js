@@ -89,6 +89,94 @@ let race = null;
 let selectedCharacter = characters[0];
 let selectedCircuit = circuits[0];
 
+const MUSIC = {
+  home: './music home.mp3',
+  'bali-circuit': './music bali track.mp3',
+  'garuda-speedway': './music garuda speedway track.mp3',
+  'merapi-mountain': './music merapi mountain track.mp3',
+  'nusantara-ring': './music nusantara ring track.mp3',
+  'raja-ampat-coast': './music raja ampat coast track.mp3'
+};
+
+const musicPlayer = new Audio();
+musicPlayer.loop = true;
+musicPlayer.preload = 'auto';
+
+const savedMusicVolume = Number(
+  localStorage.getItem('musicVolume')
+);
+
+let musicVolume = Number.isFinite(savedMusicVolume)
+  ? THREE.MathUtils.clamp(savedMusicVolume, 0, 1)
+  : 0.7;
+
+let musicMuted =
+  localStorage.getItem('musicMuted') === 'true';
+
+let currentMusicKey = null;
+
+function applyMusicSettings() {
+  musicPlayer.volume = musicMuted
+    ? 0
+    : musicVolume;
+
+  const slider = document.querySelector('#music-volume');
+  const output = document.querySelector('#music-volume-value');
+  const mute = document.querySelector('#music-muted');
+
+  if (slider) {
+    slider.value = String(
+      Math.round(musicVolume * 100)
+    );
+  }
+
+  if (output) {
+    output.textContent =
+      `${Math.round(musicVolume * 100)}%`;
+  }
+
+  if (mute) {
+    mute.checked = musicMuted;
+  }
+}
+
+function playMusic(key) {
+  const src = MUSIC[key];
+
+  if (!src) {
+    return;
+  }
+
+  if (currentMusicKey !== key) {
+    musicPlayer.pause();
+    musicPlayer.src = src;
+    musicPlayer.currentTime = 0;
+    currentMusicKey = key;
+  }
+
+  applyMusicSettings();
+
+  musicPlayer.play().catch(() => {
+    // Browser dapat menolak autoplay sampai ada interaksi pengguna.
+    // Pemutaran akan dicoba lagi pada klik menu berikutnya.
+  });
+}
+
+function playHomeMusic() {
+  playMusic('home');
+}
+
+function playCircuitMusic(circuit) {
+  playMusic(circuit.id);
+}
+
+function stopMusic() {
+  musicPlayer.pause();
+  currentMusicKey = null;
+}
+
+applyMusicSettings();
+
 const previewContainer =
   document.querySelector('#character-preview');
 
@@ -362,6 +450,7 @@ function state(kind) {
 
   if (kind === 'finished') {
     count.classList.remove('show');
+    playHomeMusic();
 
     document
       .querySelector('#hud')
@@ -437,6 +526,8 @@ function createRace() {
 }
 
 function showMenu() {
+  playHomeMusic();
+
   document
     .querySelector('#results')
     .classList.add('hidden');
@@ -578,6 +669,7 @@ document.querySelector(
 };
 
 document.querySelector('#choose-circuit').onclick = () => {
+  playHomeMusic();
   renderCircuits();
 
   document.querySelector('#menu').classList.add('hidden');
@@ -592,15 +684,71 @@ document.querySelector('#circuit-back').onclick = () => {
 document.querySelector(
   '#settings'
 ).onclick = () => {
-  alert(
-    'Pengaturan akan tersedia pada tahap berikutnya.'
+  playHomeMusic();
+
+  document
+    .querySelector('#menu')
+    .classList.add('hidden');
+
+  document
+    .querySelector('#settings-screen')
+    .classList.remove('hidden');
+
+  applyMusicSettings();
+};
+
+document.querySelector(
+  '#settings-back'
+).onclick = () => {
+  document
+    .querySelector('#settings-screen')
+    .classList.add('hidden');
+
+  document
+    .querySelector('#menu')
+    .classList.remove('hidden');
+
+  playHomeMusic();
+};
+
+document.querySelector(
+  '#music-volume'
+).oninput = (event) => {
+  musicVolume =
+    Number(event.target.value) / 100;
+
+  localStorage.setItem(
+    'musicVolume',
+    String(musicVolume)
   );
+
+  applyMusicSettings();
+};
+
+document.querySelector(
+  '#music-muted'
+).onchange = (event) => {
+  musicMuted = event.target.checked;
+
+  localStorage.setItem(
+    'musicMuted',
+    String(musicMuted)
+  );
+
+  applyMusicSettings();
+
+  if (!musicMuted) {
+    playMusic(
+      currentMusicKey || 'home'
+    );
+  }
 };
 
 document.querySelector(
   '#start'
 ).onclick = () => {
   createRace();
+  playCircuitMusic(selectedCircuit);
 
   document
     .querySelector('#menu')
@@ -621,6 +769,7 @@ document.querySelector(
   '#restart'
 ).onclick = () => {
   createRace();
+  playCircuitMusic(selectedCircuit);
 
   document
     .querySelector('#results')
@@ -673,3 +822,4 @@ renderer.setAnimationLoop(() => {
 });
 
 showInitialCharacterPreviewPlaceholder();
+playHomeMusic();
