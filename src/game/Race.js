@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Track } from './Track.js';
-import { Kart } from './Kart.js?v=2';
+import { Kart } from './Kart.js';
 
 export class Race {
   constructor({
@@ -16,34 +16,52 @@ export class Race {
     this.camera = camera;
     this.input = input;
 
-    this.track = new Track(scene, circuit);
+    this.track =
+      new Track(
+        scene,
+        circuit
+      );
+
     this.circuit = circuit;
 
-    this.karts = characters.map(
-      (character, index) =>
-        new Kart(
-          character,
-          index === 0
-        )
+    this.karts =
+      characters.map(
+        (character, index) =>
+          new Kart(
+            character,
+            index === 0
+          )
+      );
+
+    this.karts.forEach(
+      (kart) => {
+        scene.add(kart.mesh);
+      }
     );
 
-    this.karts.forEach((kart) => {
-      scene.add(kart.mesh);
-    });
+    this.onUpdate =
+      onUpdate || (() => {});
 
-    this.onUpdate = onUpdate;
-    this.onState = onState;
+    this.onState =
+      onState || (() => {});
 
-    this.clock = new THREE.Clock();
+    this.clock =
+      new THREE.Clock();
 
     this.state = 'menu';
+
     this.elapsed = 0;
+
     this.count = 3;
 
     this.finishOrder = [];
 
     this.setup();
   }
+
+  // =========================================================
+  // SETUP
+  // =========================================================
 
   setup() {
     const point =
@@ -69,8 +87,6 @@ export class Race {
 
     this.karts.forEach(
       (kart, index) => {
-        kart.finished = false;
-
         const startPosition =
           point
             .clone()
@@ -89,10 +105,17 @@ export class Race {
         );
 
         kart.progress = 0;
+
         kart.lap = 1;
+
+        kart.finished = false;
       }
     );
   }
+
+  // =========================================================
+  // START
+  // =========================================================
 
   start() {
     this.setup();
@@ -101,13 +124,14 @@ export class Race {
       'countdown';
 
     this.count = 3;
+
     this.elapsed = 0;
 
     this.clock.start();
 
     this.onState(
       'countdown',
-      this.count
+      3
     );
 
     setTimeout(() => {
@@ -115,7 +139,11 @@ export class Race {
     }, 1000);
   }
 
-  tickCountdown(n) {
+  // =========================================================
+  // COUNTDOWN
+  // =========================================================
+
+  tickCountdown(number) {
     if (
       this.state !==
       'countdown'
@@ -123,37 +151,42 @@ export class Race {
       return;
     }
 
-    this.count = n;
+    this.count =
+      number;
 
-    if (n > 0) {
+    if (number > 0) {
       this.onState(
         'countdown',
-        n
+        number
       );
 
       setTimeout(() => {
         this.tickCountdown(
-          n - 1
+          number - 1
         );
       }, 1000);
-    } else {
-      this.onState('go');
 
-      this.state =
-        'racing';
-
-      setTimeout(() => {
-        if (
-          this.state ===
-          'racing'
-        ) {
-          this.onState(
-            'clear'
-          );
-        }
-      }, 750);
+      return;
     }
+
+    this.onState('go');
+
+    this.state =
+      'racing';
+
+    setTimeout(() => {
+      if (
+        this.state ===
+        'racing'
+      ) {
+        this.onState('clear');
+      }
+    }, 750);
   }
+
+  // =========================================================
+  // UPDATE
+  // =========================================================
 
   update() {
     const dt =
@@ -168,19 +201,23 @@ export class Race {
     ) {
       this.elapsed += dt;
 
+      // PLAYER
       const player =
         this.karts[0];
 
-      player.updatePlayer(
-        dt,
-        this.input,
-        this.track
-      );
+      if (player) {
+        player.updatePlayer(
+          dt,
+          this.input,
+          this.track
+        );
 
-      this.checkFinish(
-        player
-      );
+        this.checkFinish(
+          player
+        );
+      }
 
+      // AI
       this.karts
         .slice(1)
         .forEach(
@@ -191,14 +228,17 @@ export class Race {
               return;
             }
 
+            const target =
+              this.track.point(
+                kart.progress +
+                0.018 +
+                index * 0.001
+              );
+
             kart.updateAI(
               dt,
               this.track,
-              this.track.point(
-                kart.progress +
-                  0.018 +
-                  index * 0.001
-              )
+              target
             );
 
             this.checkFinish(
@@ -210,6 +250,7 @@ export class Race {
       this.resolveKarts();
 
       if (
+        player &&
         player.finished
       ) {
         this.state =
@@ -227,6 +268,10 @@ export class Race {
     this.onUpdate(this);
   }
 
+  // =========================================================
+  // FINISH
+  // =========================================================
+
   checkFinish(kart) {
     if (
       kart.finished
@@ -238,7 +283,8 @@ export class Race {
       kart.lap >=
       this.circuit.laps
     ) {
-      kart.finished = true;
+      kart.finished =
+        true;
 
       if (
         !this.finishOrder.includes(
@@ -251,6 +297,10 @@ export class Race {
       }
     }
   }
+
+  // =========================================================
+  // COLLISION
+  // =========================================================
 
   resolveKarts() {
     for (
@@ -275,6 +325,7 @@ export class Race {
           );
 
         if (
+          distance > 0 &&
           distance < 2.1
         ) {
           const normal =
@@ -301,6 +352,10 @@ export class Race {
       }
     }
   }
+
+  // =========================================================
+  // RANKING
+  // =========================================================
 
   rankings() {
     const unfinished =
@@ -330,9 +385,17 @@ export class Race {
     );
   }
 
+  // =========================================================
+  // CAMERA
+  // =========================================================
+
   follow() {
     const player =
       this.karts[0];
+
+    if (!player) {
+      return;
+    }
 
     const position =
       player.mesh.position;
@@ -368,7 +431,7 @@ export class Race {
       0.09
     );
 
-    this.camera.lookAt(
+    const lookTarget =
       position
         .clone()
         .addScaledVector(
@@ -381,7 +444,10 @@ export class Race {
             1,
             0
           )
-        )
+        );
+
+    this.camera.lookAt(
+      lookTarget
     );
   }
 }
