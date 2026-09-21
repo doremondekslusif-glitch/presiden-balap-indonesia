@@ -101,6 +101,7 @@ const MUSIC = {
 const musicPlayer = new Audio();
 musicPlayer.loop = true;
 musicPlayer.preload = 'auto';
+musicPlayer.autoplay = true;
 
 // SFX countdown diputar sekali saat hitungan 3 dimulai.
 // File ini berisi rangkaian suara hitungan mundur.
@@ -186,8 +187,8 @@ function playMusic(key) {
   applyMusicSettings();
 
   musicPlayer.play().catch(() => {
-    // Browser dapat menolak autoplay sampai ada interaksi pengguna.
-    // Pemutaran akan dicoba lagi pada klik menu berikutnya.
+    // Browser dapat menolak autoplay sebelum ada interaksi pengguna.
+    // Listener interaksi pertama di bawah akan mencoba memutarnya lagi.
   });
 }
 
@@ -698,18 +699,6 @@ function renderCharacters() {
   document
     .querySelectorAll('.character-card')
     .forEach((card) => {
-      card.onmouseenter = () => {
-        const character =
-          characters.find(
-            (item) =>
-              item.id === card.dataset.id
-          );
-
-        if (character) {
-          playHornSfx(character);
-        }
-      };
-
       card.onclick = () => {
         const character =
           characters.find(
@@ -912,4 +901,19 @@ renderer.setAnimationLoop(() => {
 });
 
 showInitialCharacterPreviewPlaceholder();
+
+// Coba mulai musik home segera saat game dibuka.
+// Jika browser memblokir autoplay, interaksi pertama pengguna
+// (klik/tap/tekan tombol) langsung membuka kunci pemutaran musik.
+const unlockHomeMusic = () => {
+  if (musicMuted) {
+    return;
+  }
+
+  playHomeMusic();
+};
+
+window.addEventListener('pointerdown', unlockHomeMusic);
+window.addEventListener('keydown', unlockHomeMusic);
+
 playHomeMusic();
