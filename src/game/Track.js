@@ -324,7 +324,7 @@ export class Track {
         const offset =
           side
             .clone()
-            .multiplyScalar(0.15);
+            .multiplyScalar(0.30);
 
         const kerb =
           new THREE.Mesh(
@@ -1010,9 +1010,9 @@ export class Track {
       -Math.PI / 2;
 
     ocean.position.set(
-      63,
+      78,
       -0.12,
-      -52
+      -68
     );
 
     group.add(ocean);
