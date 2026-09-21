@@ -36,7 +36,7 @@
 
       <section class="minimap">
         <canvas id="map" width="170" height="130"></canvas>
-        <b>BALI CIRCUIT</b>
+        <b id="minimap-circuit-name">BALI CIRCUIT</b>
       </section>
 
       <div id="countdown" class="countdown"></div>
@@ -53,7 +53,7 @@
         </h1>
 
         <p class="sub">
-          Bali Circuit · 3D arcade racing
+          <span id="menu-circuit-name">Bali Circuit</span> · 3D arcade racing
         </p>
 
         <div class="controls">
@@ -84,6 +84,23 @@
             PENGATURAN
           </button>
         </div>
+      </div>
+    </section>
+
+    <!-- CIRCUIT SELECT -->
+    <section id="circuit-select" class="screen hidden">
+      <div class="circuit-panel">
+        <div class="circuit-header">
+          <p class="eyebrow">PILIH LINTASAN</p>
+          <h2>SIRKUIT</h2>
+          <p>Pilih arena balapan sebelum memulai.</p>
+        </div>
+
+        <div id="circuit-cards" class="circuit-cards"></div>
+
+        <button id="circuit-back" class="secondary">
+          KEMBALI
+        </button>
       </div>
     </section>
 
@@ -122,7 +139,7 @@
       <div class="panel results">
         <p class="eyebrow">BALAPAN SELESAI</p>
 
-        <h2>HASIL BALI CIRCUIT</h2>
+        <h2>HASIL <span id="result-circuit-name">BALI CIRCUIT</span></h2>
 
         <ol id="result-list"></ol>
 
