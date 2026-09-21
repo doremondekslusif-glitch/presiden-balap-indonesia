@@ -14,7 +14,7 @@
     <div id="hud" class="hud hidden">
       <section class="race-card position">
         <span>POSISI</span>
-        <strong id="position">1<small>/4</small></strong>
+        <strong id="position">1<small>/6</small></strong>
         <b id="racer-name">Garuda Muda</b>
       </section>
 
@@ -89,21 +89,31 @@
 
     <!-- CHARACTER SELECT -->
     <section id="character-select" class="screen hidden">
-      <div class="panel">
-        <p class="eyebrow">PILIH PEMBALAP</p>
-
-        <h2>KARAKTER</h2>
-
-        <div
-          id="character-cards"
-          class="character-cards">
+      <div class="character-panel">
+        <div class="character-preview-panel">
+          <p class="eyebrow">PREVIEW KARAKTER</p>
+          <div id="character-preview">
+            <span>Memuat karakter...</span>
+          </div>
+          <strong id="character-preview-name">Prabowo</strong>
+          <small>Model GLB yang digunakan saat balapan</small>
         </div>
 
-        <button
-          id="character-back"
-          class="secondary">
-          KEMBALI
-        </button>
+        <div class="character-choice-panel">
+          <p class="eyebrow">PILIH PEMBALAP</p>
+          <h2>KARAKTER</h2>
+
+          <div
+            id="character-cards"
+            class="character-cards">
+          </div>
+
+          <button
+            id="character-back"
+            class="secondary">
+            KEMBALI
+          </button>
+        </div>
       </div>
     </section>
 
@@ -124,7 +134,6 @@
 
   </main>
 
-  <!-- THREE.JS -->
   <script type="importmap">
     {
       "imports": {
