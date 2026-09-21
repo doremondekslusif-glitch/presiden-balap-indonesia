@@ -520,11 +520,11 @@ export class Kart {
 
     let steer = 0;
 
-    if (left) {
+    if (right) {
       steer -= 1;
     }
 
-    if (right) {
+    if (left) {
       steer += 1;
     }
 
