@@ -103,8 +103,10 @@ export class Hud {
           kart.character.id
         );
 
+      // Bulatan dibuat sedikit lebih kecil, tetapi gambar karakter
+      // di dalamnya sudah di-crop agar memenuhi area bulatan.
       const radius =
-        kart === player ? 16 : 14;
+        kart === player ? 13 : 11;
 
       if (icon && icon.complete) {
         c.save();
@@ -139,7 +141,7 @@ export class Hud {
         );
 
         c.lineWidth =
-          kart === player ? 2.5 : 1.5;
+          kart === player ? 2 : 1.25;
 
         c.strokeStyle =
           kart === player
@@ -158,7 +160,7 @@ export class Hud {
         c.arc(
           x,
           y,
-          kart === player ? 6 : 5,
+          kart === player ? 5 : 4,
           0,
           Math.PI * 2
         );
