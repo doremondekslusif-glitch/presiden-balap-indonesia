@@ -219,7 +219,7 @@ function loadPreviewAsset(character) {
   }
 
   if (previewCache.has(url)) {
-    return previewCache.get(url);
+    return Promise.resolve(previewCache.get(url));
   }
 
   const promise = new Promise((resolve, reject) => {
