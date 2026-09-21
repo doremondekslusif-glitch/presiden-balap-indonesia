@@ -91,6 +91,10 @@ let selectedCharacter = characters[0];
 const previewContainer =
   document.querySelector('#character-preview');
 
+// Render UI dasar secepat mungkin agar game langsung terlihat
+// tanpa menunggu model 3D selesai dimuat.
+document.querySelector('#menu').classList.remove('hidden');
+
 const previewScene = new THREE.Scene();
 previewScene.background = new THREE.Color(0x061525);
 
@@ -154,6 +158,13 @@ const previewCache = new Map();
 let previewModel = null;
 let previewRequest = 0;
 let previewPreloadStarted = false;
+
+function showInitialCharacterPreviewPlaceholder() {
+  document.querySelector('#character-preview-name').textContent =
+    selectedCharacter.name;
+
+  previewRenderer.setClearColor(0x061525, 1);
+}
 
 function resizeCharacterPreview() {
   const width = Math.max(
@@ -606,5 +617,6 @@ renderer.setAnimationLoop(() => {
 });
 
 resizeCharacterPreview();
+showInitialCharacterPreviewPlaceholder();
 showCharacterPreview(selectedCharacter);
 preloadCharacterPreviews();
