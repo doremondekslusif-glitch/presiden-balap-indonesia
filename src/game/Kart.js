@@ -18,6 +18,7 @@ export class Kart {
     this.progress = 0;
     this.previousProgress = 0;
     this.lapArmed = false;
+    this.lapCheckpointPassed = false;
 
     this.finished = false;
     this.boost = 100;
@@ -450,6 +451,7 @@ export class Kart {
     this.progress = 0;
     this.previousProgress = 0;
     this.lapArmed = false;
+    this.lapCheckpointPassed = false;
     this.finished = false;
     this.boost = 100;
   }
@@ -759,26 +761,29 @@ export class Kart {
     this.progress =
       nearest.progress;
 
-    // Jangan armed saat start. Kart harus sudah
-    // meninggalkan area start terlebih dahulu.
+    // Kart wajib melewati checkpoint setelah garis start
+    // sebelum crossing berikutnya boleh dihitung sebagai lap.
+    // Ini mencegah posisi grid yang berada dekat garis start
+    // langsung dianggap sudah menyelesaikan satu putaran.
     if (
-      !this.lapArmed &&
-      this.progress > 0.18 &&
+      !this.lapCheckpointPassed &&
+      this.progress > 0.30 &&
+      this.progress < 0.70 &&
       this.speed > 1
     ) {
-      this.lapArmed = true;
+      this.lapCheckpointPassed = true;
     }
 
-    // Hanya crossing garis finish setelah satu putaran
-    // penuh yang dihitung sebagai lap baru.
+    // Lap hanya bertambah saat benar-benar melewati
+    // garis start/finish dari arah balapan yang benar.
     if (
-      this.lapArmed &&
-      this.previousProgress > 0.88 &&
-      this.progress < 0.12 &&
+      this.lapCheckpointPassed &&
+      this.previousProgress > 0.85 &&
+      this.progress < 0.15 &&
       this.speed > 2
     ) {
       this.lap++;
-      this.lapArmed = false;
+      this.lapCheckpointPassed = false;
     }
   }
 
