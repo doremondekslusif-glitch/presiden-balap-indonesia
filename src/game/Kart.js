@@ -514,44 +514,44 @@ export class Kart {
         topSpeed
       );
 
-    // =======================================================
-    // STEERING
-    // =======================================================
+// =======================================================
+// STEERING
+// =======================================================
 
-    let steer = 0;
+let steer = 0;
 
-    if (right) {
-      steer -= 1;
-    }
+if (left) {
+  steer += 1;
+}
 
-    if (left) {
-      steer += 1;
-    }
+if (right) {
+  steer -= 1;
+}
 
-    const steeringStrength =
-      THREE.MathUtils.clamp(
-        Math.abs(this.speed) / 8,
-        0.25,
-        1
-      );
+const steeringStrength =
+  THREE.MathUtils.clamp(
+    Math.abs(this.speed) / 8,
+    0.25,
+    1
+  );
 
-    if (
-      steer !== 0 &&
-      Math.abs(this.speed) > 0.15
-    ) {
-      const direction =
-        this.speed >= 0
-          ? 1
-          : -1;
+if (
+  steer !== 0 &&
+  Math.abs(this.speed) > 0.15
+) {
+  const direction =
+    this.speed >= 0
+      ? 1
+      : -1;
 
-      this.heading +=
-        steer *
-        1.65 *
-        this.handling *
-        steeringStrength *
-        dt *
-        direction;
-    }
+  this.heading +=
+    steer *
+    1.65 *
+    this.handling *
+    steeringStrength *
+    dt *
+    direction;
+}
 
     this.move(dt, track);
   }
