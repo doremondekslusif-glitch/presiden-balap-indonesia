@@ -454,23 +454,23 @@ function ensureMapIconRenderer() {
 
   mapIconCamera =
     new THREE.OrthographicCamera(
-      -1.25,
-      1.25,
-      2.9,
-      0.55,
+      -1.6,
+      1.6,
+      3.2,
+      -0.2,
       0.1,
       20
     );
 
   mapIconCamera.position.set(
     0,
-    1.75,
+    1.5,
     6
   );
 
   mapIconCamera.lookAt(
     0,
-    1.75,
+    1.5,
     0
   );
 }
@@ -508,15 +508,40 @@ async function createCharacterMapIcon(character) {
   mapIconScene.add(light);
   mapIconScene.add(model);
 
+  // Framing mengikuti bounding box model supaya seluruh kepala/wajah
+  // selalu masuk kamera, termasuk karakter yang bentuknya berbeda.
+  const modelBox =
+    new THREE.Box3().setFromObject(model);
+
+  const modelSize =
+    modelBox.getSize(new THREE.Vector3());
+
+  const modelCenter =
+    modelBox.getCenter(new THREE.Vector3());
+
+  const viewSize =
+    Math.max(modelSize.x, modelSize.y) * 1.12;
+
+  const halfView =
+    Math.max(viewSize / 2, 1.7);
+
+  mapIconCamera.left = -halfView;
+  mapIconCamera.right = halfView;
+  mapIconCamera.top =
+    modelCenter.y + halfView;
+  mapIconCamera.bottom =
+    modelCenter.y - halfView;
+  mapIconCamera.updateProjectionMatrix();
+
   mapIconCamera.position.set(
     0,
-    1.75,
+    modelCenter.y,
     6
   );
 
   mapIconCamera.lookAt(
     0,
-    1.75,
+    modelCenter.y,
     0
   );
 
@@ -586,7 +611,9 @@ async function createCharacterMapIcon(character) {
   }
 
   if (maxX >= minX && maxY >= minY) {
-    const padding = 2;
+    // Sisakan sedikit margin supaya wajah tidak terasa menempel
+    // atau terpotong oleh tepi bulatan.
+    const padding = 7;
 
     minX = Math.max(0, minX - padding);
     minY = Math.max(0, minY - padding);
@@ -605,7 +632,7 @@ async function createCharacterMapIcon(character) {
     const fittedContext =
       fittedCanvas.getContext('2d');
 
-    const targetSize = 120;
+    const targetSize = 112;
     const scale =
       Math.min(
         targetSize / cropWidth,
@@ -616,6 +643,27 @@ async function createCharacterMapIcon(character) {
     const drawHeight = cropHeight * scale;
 
     fittedContext.clearRect(
+      0,
+      0,
+      128,
+      128
+    );
+
+    // Setiap karakter mendapat background berbeda berdasarkan warna kartunya.
+    // Background dibuat sedikit lebih gelap agar wajah/model tetap terbaca.
+    const iconColor = new THREE.Color(
+      character.color ?? 0x2d5f7a
+    );
+
+    iconColor.lerp(
+      new THREE.Color(0x061525),
+      0.28
+    );
+
+    fittedContext.fillStyle =
+      '#' + iconColor.getHexString();
+
+    fittedContext.fillRect(
       0,
       0,
       128,
