@@ -17,6 +17,7 @@ export class Kart {
     this.lap = 0;
     this.progress = 0;
     this.previousProgress = 0;
+    this.lapArmed = false;
 
     this.finished = false;
     this.boost = 100;
@@ -448,6 +449,7 @@ export class Kart {
     this.lap = 0;
     this.progress = 0;
     this.previousProgress = 0;
+    this.lapArmed = false;
     this.finished = false;
     this.boost = 100;
   }
@@ -757,12 +759,26 @@ export class Kart {
     this.progress =
       nearest.progress;
 
+    // Jangan armed saat start. Kart harus sudah
+    // meninggalkan area start terlebih dahulu.
     if (
+      !this.lapArmed &&
+      this.progress > 0.18 &&
+      this.speed > 1
+    ) {
+      this.lapArmed = true;
+    }
+
+    // Hanya crossing garis finish setelah satu putaran
+    // penuh yang dihitung sebagai lap baru.
+    if (
+      this.lapArmed &&
       this.previousProgress > 0.88 &&
       this.progress < 0.12 &&
       this.speed > 2
     ) {
       this.lap++;
+      this.lapArmed = false;
     }
   }
 
