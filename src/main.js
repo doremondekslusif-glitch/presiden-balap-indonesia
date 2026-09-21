@@ -526,14 +526,125 @@ async function createCharacterMapIcon(character) {
     mapIconCamera
   );
 
-  const imageSource =
-    mapIconRenderer.domElement.toDataURL(
-      'image/png'
+  // Buang ruang transparan di sekeliling model supaya
+  // karakter benar-benar memenuhi area ikon, bukan terlihat kecil
+  // dengan banyak ruang kosong di dalam bulatan.
+  const sourceCanvas =
+    mapIconRenderer.domElement;
+
+  const cropCanvas =
+    document.createElement('canvas');
+
+  cropCanvas.width = 128;
+  cropCanvas.height = 128;
+
+  const cropContext =
+    cropCanvas.getContext('2d');
+
+  cropContext.clearRect(
+    0,
+    0,
+    cropCanvas.width,
+    cropCanvas.height
+  );
+
+  cropContext.drawImage(
+    sourceCanvas,
+    0,
+    0,
+    128,
+    128
+  );
+
+  const pixels =
+    cropContext.getImageData(
+      0,
+      0,
+      128,
+      128
+    ).data;
+
+  let minX = 128;
+  let minY = 128;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < 128; y += 1) {
+    for (let x = 0; x < 128; x += 1) {
+      const alpha =
+        pixels[
+          (y * 128 + x) * 4 + 3
+        ];
+
+      if (alpha > 8) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (maxX >= minX && maxY >= minY) {
+    const padding = 2;
+
+    minX = Math.max(0, minX - padding);
+    minY = Math.max(0, minY - padding);
+    maxX = Math.min(127, maxX + padding);
+    maxY = Math.min(127, maxY + padding);
+
+    const cropWidth = maxX - minX + 1;
+    const cropHeight = maxY - minY + 1;
+
+    const fittedCanvas =
+      document.createElement('canvas');
+
+    fittedCanvas.width = 128;
+    fittedCanvas.height = 128;
+
+    const fittedContext =
+      fittedCanvas.getContext('2d');
+
+    const targetSize = 120;
+    const scale =
+      Math.min(
+        targetSize / cropWidth,
+        targetSize / cropHeight
+      );
+
+    const drawWidth = cropWidth * scale;
+    const drawHeight = cropHeight * scale;
+
+    fittedContext.clearRect(
+      0,
+      0,
+      128,
+      128
     );
+
+    fittedContext.drawImage(
+      cropCanvas,
+      minX,
+      minY,
+      cropWidth,
+      cropHeight,
+      (128 - drawWidth) / 2,
+      (128 - drawHeight) / 2,
+      drawWidth,
+      drawHeight
+    );
+
+    const imageSource =
+      fittedCanvas.toDataURL('image/png');
+
+    mapIconScene.remove(model);
+
+    return imageSource;
+  }
 
   mapIconScene.remove(model);
 
-  return imageSource;
+  return sourceCanvas.toDataURL('image/png');
 }
 
 function preloadCharacterMapIcons() {
