@@ -1,4 +1,3 @@
-```js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -514,49 +513,46 @@ export class Kart {
         topSpeed
       );
 
-// =======================================================
-// STEERING
-// =======================================================
+    // STEERING
+    let steer = 0;
 
-let steer = 0;
+    if (left) {
+      steer = -1;
+    }
 
-if (left) {
-  steer = -1;
-}
+    if (right) {
+      steer = 1;
+    }
 
-if (right) {
-  steer = 1;
-}
+    const steeringStrength =
+      THREE.MathUtils.clamp(
+        Math.abs(this.speed) / 8,
+        0.25,
+        1
+      );
 
-const steeringStrength =
-  THREE.MathUtils.clamp(
-    Math.abs(this.speed) / 8,
-    0.25,
-    1
-  );
+    if (
+      steer !== 0 &&
+      Math.abs(this.speed) > 0.15
+    ) {
+      const direction =
+        this.speed >= 0
+          ? 1
+          : -1;
 
-if (
-  steer !== 0 &&
-  Math.abs(this.speed) > 0.15
-) {
-  const direction =
-    this.speed >= 0
-      ? 1
-      : -1;
+      const turnRate =
+        1.65 *
+        this.handling *
+        steeringStrength;
 
-  const turnRate =
-    1.65 *
-    this.handling *
-    steeringStrength;
+      this.heading -=
+        steer *
+        turnRate *
+        dt *
+        direction;
+    }
 
-  this.heading -=
-    steer *
-    turnRate *
-    dt *
-    direction;
-}
-
-this.move(dt, track);
+    this.move(dt, track);
   }
 
   updateAI(dt, track, target) {
