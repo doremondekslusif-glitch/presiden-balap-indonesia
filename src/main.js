@@ -541,6 +541,10 @@ function showMenu() {
     .classList.add('hidden');
 
   document
+    .querySelector('#settings-screen')
+    .classList.add('hidden');
+
+  document
     .querySelector('#hud')
     .classList.add('hidden');
 
