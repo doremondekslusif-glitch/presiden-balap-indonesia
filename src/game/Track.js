@@ -4,13 +4,42 @@ export class Track {
   constructor(scene, spec) {
     this.spec = spec;
 
-    this.curve = new THREE.CatmullRomCurve3(
-      spec.points.map(
-        (p) => new THREE.Vector3(...p)
-      ),
+    const rawPoints = spec.points.map(
+      (p) => new THREE.Vector3(...p)
+    );
+
+    // Setiap circuit memiliki target panjang lap yang
+    // konsisten. Skala diterapkan ke seluruh control points
+    // sehingga bentuk lintasan tetap sama.
+    const rawCurve = new THREE.CatmullRomCurve3(
+      rawPoints,
       true,
       'centripetal'
     );
+
+    rawCurve.arcLengthDivisions = 1000;
+
+    const rawLength = rawCurve.getLength();
+    const targetLength = Number(spec.lapLength) || rawLength;
+    const scale =
+      rawLength > 0
+        ? targetLength / rawLength
+        : 1;
+
+    const scaledPoints = rawPoints.map(
+      (point) =>
+        point.clone().multiplyScalar(scale)
+    );
+
+    this.curve = new THREE.CatmullRomCurve3(
+      scaledPoints,
+      true,
+      'centripetal'
+    );
+
+    this.curve.arcLengthDivisions = 1000;
+
+    this.lapLength = this.curve.getLength();
 
     this.samples = 240;
 
