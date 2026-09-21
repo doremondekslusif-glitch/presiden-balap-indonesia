@@ -173,6 +173,7 @@ function showInitialCharacterPreviewPlaceholder() {
 
   ensurePreviewRenderer();
   previewRenderer.setClearColor(0x061525, 1);
+  resizeCharacterPreview();
 }
 
 function resizeCharacterPreview() {
@@ -491,6 +492,7 @@ function renderCharacters() {
     .join('');
 
   showCharacterPreview(selectedCharacter);
+  resizeCharacterPreview();
 
   document
     .querySelectorAll('.character-card')
