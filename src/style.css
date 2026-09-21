@@ -592,3 +592,59 @@ button:hover {
     height: 100px;
   }
 }
+
+
+/* Music settings */
+
+.settings-panel {
+  width: min(520px, 90vw);
+}
+
+.settings-panel h2 {
+  margin-bottom: 10px;
+}
+
+.volume-control {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  color: #f5c541;
+  font: 800 14px Impact, "Arial Narrow", sans-serif;
+  letter-spacing: 1px;
+}
+
+.volume-control output {
+  color: #fff;
+}
+
+#music-volume {
+  width: 100%;
+  margin: 14px 0 24px;
+  accent-color: #e73543;
+  cursor: pointer;
+}
+
+.music-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 22px;
+  background: #04121f;
+  border: 1px solid #315274;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.music-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #e73543;
+}
+
+.settings-panel #settings-back {
+  width: 100%;
+}
