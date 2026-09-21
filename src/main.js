@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { characters } from './data/characters.js';
 import { baliCircuit } from './data/circuits.js';
 import { Input } from './game/Input.js';
@@ -149,8 +150,10 @@ previewFloor.position.y = -0.08;
 previewScene.add(previewFloor);
 
 const previewLoader = new GLTFLoader();
+const previewCache = new Map();
 let previewModel = null;
 let previewRequest = 0;
+let previewPreloadStarted = false;
 
 function resizeCharacterPreview() {
   const width = Math.max(
@@ -173,6 +176,68 @@ function resizeCharacterPreview() {
   );
 }
 
+function preparePreviewScene(source) {
+  const model = SkeletonUtils.clone(source);
+
+  model.traverse((object) => {
+    if (object.isMesh) {
+      object.castShadow = true;
+      object.receiveShadow = true;
+    }
+  });
+
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+
+  if (size.y > 0) {
+    model.scale.setScalar(3.0 / size.y);
+  }
+
+  const scaledBox =
+    new THREE.Box3().setFromObject(model);
+
+  const center =
+    scaledBox.getCenter(new THREE.Vector3());
+
+  model.position.x -= center.x;
+  model.position.z -= center.z;
+
+  const groundedBox =
+    new THREE.Box3().setFromObject(model);
+
+  model.position.y -= groundedBox.min.y;
+
+  return model;
+}
+
+function loadPreviewAsset(character) {
+  const url =
+    character.previewModel || character.model;
+
+  if (!url) {
+    return Promise.resolve(null);
+  }
+
+  if (previewCache.has(url)) {
+    return previewCache.get(url);
+  }
+
+  const promise = new Promise((resolve, reject) => {
+    previewLoader.load(
+      url,
+      (gltf) => {
+        previewCache.set(url, gltf.scene);
+        resolve(gltf.scene);
+      },
+      undefined,
+      reject
+    );
+  });
+
+  previewCache.set(url, promise);
+  return promise;
+}
+
 function showCharacterPreview(character) {
   previewRequest++;
 
@@ -187,53 +252,62 @@ function showCharacterPreview(character) {
     '#character-preview-name'
   ).textContent = character.name;
 
-  if (!character.model) {
-    return;
-  }
-
-  previewLoader.load(
-    character.previewModel || character.model,
-    (gltf) => {
-      if (requestId !== previewRequest) {
+  loadPreviewAsset(character)
+    .then((source) => {
+      if (
+        requestId !== previewRequest ||
+        !source
+      ) {
         return;
       }
 
-      const model = gltf.scene;
-
-      model.traverse((object) => {
-        if (object.isMesh) {
-          object.castShadow = true;
-          object.receiveShadow = true;
-        }
-      });
-
-      const box = new THREE.Box3().setFromObject(model);
-      const size = box.getSize(new THREE.Vector3());
-
-      if (size.y > 0) {
-        model.scale.setScalar(3.0 / size.y);
-      }
-
-      const scaledBox =
-        new THREE.Box3().setFromObject(model);
-
-      const center =
-        scaledBox.getCenter(new THREE.Vector3());
-
-      model.position.x -= center.x;
-      model.position.z -= center.z;
-
-      const groundedBox =
-        new THREE.Box3().setFromObject(model);
-
-      model.position.y -= groundedBox.min.y;
-
-      previewModel = model;
+      previewModel = preparePreviewScene(source);
       previewScene.add(previewModel);
-
       previewCamera.lookAt(0, 1.35, 0);
+    })
+    .catch(() => {
+      if (requestId === previewRequest) {
+        document.querySelector(
+          '#character-preview'
+        ).classList.add('preview-error');
+      }
+    });
+}
+
+function preloadCharacterPreviews() {
+  if (previewPreloadStarted) {
+    return;
+  }
+
+  previewPreloadStarted = true;
+
+  // Karakter terpilih dimuat lebih dulu. Sisanya dipanaskan
+  // di background supaya saat kartu diklik model sudah tersedia.
+  const ordered = [
+    selectedCharacter,
+    ...characters.filter(
+      (character) =>
+        character.id !== selectedCharacter.id
+    )
+  ];
+
+  const warmNext = (index) => {
+    if (index >= ordered.length) {
+      return;
     }
-  );
+
+    loadPreviewAsset(ordered[index])
+      .catch(() => {})
+      .finally(() => {
+        const schedule =
+          window.requestIdleCallback ||
+          ((callback) => setTimeout(callback, 120));
+
+        schedule(() => warmNext(index + 1));
+      });
+  };
+
+  warmNext(0);
 }
 
 
@@ -393,6 +467,7 @@ function renderCharacters() {
     .join('');
 
   showCharacterPreview(selectedCharacter);
+  preloadCharacterPreviews();
 
   document
     .querySelectorAll('.character-card')
@@ -532,3 +607,4 @@ renderer.setAnimationLoop(() => {
 
 resizeCharacterPreview();
 showCharacterPreview(selectedCharacter);
+preloadCharacterPreviews();
