@@ -134,6 +134,28 @@
       </div>
     </section>
 
+    <!-- SETTINGS -->
+    <section id="settings-screen" class="screen hidden">
+      <div class="panel settings-panel">
+        <p class="eyebrow">PENGATURAN</p>
+        <h2>MUSIK</h2>
+        <p class="sub">Atur volume musik atau matikan musik.</p>
+
+        <label class="volume-control" for="music-volume">
+          <span>VOLUME MUSIK</span>
+          <output id="music-volume-value">70%</output>
+        </label>
+        <input id="music-volume" type="range" min="0" max="100" value="70" step="1"/>
+
+        <label class="music-toggle">
+          <input id="music-muted" type="checkbox"/>
+          <span>MATIKAN MUSIK</span>
+        </label>
+
+        <button id="settings-back" class="secondary">KEMBALI</button>
+      </div>
+    </section>
+
     <!-- RESULT -->
     <section id="results" class="screen hidden">
       <div class="panel results">
