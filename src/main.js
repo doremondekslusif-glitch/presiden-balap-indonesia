@@ -470,7 +470,7 @@ function renderCircuits() {
       </div>
       <div class="circuit-info">
         <b>${circuit.name}</b>
-        <span>${circuit.laps} LAP · LEBAR ${circuit.width}M</span>
+        <span>${Math.round(circuit.lapLength)}M / LAP · LEBAR ${circuit.width}M</span>
       </div>
     </article>
   `).join('');
