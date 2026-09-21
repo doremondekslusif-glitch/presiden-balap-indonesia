@@ -102,6 +102,14 @@ const musicPlayer = new Audio();
 musicPlayer.loop = true;
 musicPlayer.preload = 'auto';
 
+// SFX countdown diputar sekali saat hitungan 3 dimulai.
+// File ini berisi rangkaian suara hitungan mundur.
+const COUNTDOWN_SFX = './3,2,1 Oldtime Countdown.mp3';
+
+const countdownSfx = new Audio(COUNTDOWN_SFX);
+countdownSfx.preload = 'auto';
+countdownSfx.volume = 0.9;
+
 const savedMusicVolume = Number(
   localStorage.getItem('musicVolume')
 );
@@ -173,6 +181,19 @@ function playCircuitMusic(circuit) {
 function stopMusic() {
   musicPlayer.pause();
   currentMusicKey = null;
+}
+
+function playCountdownSfx() {
+  countdownSfx.pause();
+  countdownSfx.currentTime = 0;
+  countdownSfx.play().catch(() => {
+    // Pemutaran diizinkan setelah pengguna menekan tombol MULAI BALAP.
+  });
+}
+
+function stopCountdownSfx() {
+  countdownSfx.pause();
+  countdownSfx.currentTime = 0;
 }
 
 applyMusicSettings();
@@ -425,14 +446,22 @@ function preloadCharacterPreviews() {
 }
 
 
-function state(kind) {
+function state(kind, value) {
   const count =
     document.querySelector('#countdown');
 
-  if (
-    kind === 'countdown' ||
-    kind === 'go'
-  ) {
+  if (kind === 'countdown') {
+    // SFX hanya dimulai sekali pada angka 3.
+    if (value === 3) {
+      playCountdownSfx();
+    }
+
+    count.textContent = race.count;
+    count.classList.add('show');
+    return;
+  }
+
+  if (kind === 'go') {
     count.textContent =
       kind === 'go'
         ? 'GO!'
@@ -450,6 +479,7 @@ function state(kind) {
 
   if (kind === 'finished') {
     count.classList.remove('show');
+    stopCountdownSfx();
     playHomeMusic();
 
     document
@@ -526,6 +556,7 @@ function createRace() {
 }
 
 function showMenu() {
+  stopCountdownSfx();
   playHomeMusic();
 
   document
