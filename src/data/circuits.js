@@ -4,6 +4,7 @@ const makeCircuit = (
   location,
   laps,
   width,
+  lapLength,
   points,
   theme
 ) => ({
@@ -12,18 +13,19 @@ const makeCircuit = (
   location,
   laps,
   width,
+  lapLength,
   points,
   theme
 });
 
 export const circuits = [
-  // Bali Circuit — lintasan oval tropis dengan tikungan panjang
   makeCircuit(
     'bali-circuit',
     'Bali Circuit',
     'Bali · Pesisir Tropis',
     3,
     12,
+    240,
     [
       [-52, 0, -8],
       [-44, 0, -30],
@@ -41,13 +43,13 @@ export const circuits = [
     'bali'
   ),
 
-  // Nusantara Ring — lebih berliku dengan banyak perubahan arah
   makeCircuit(
     'nusantara-ring',
     'Nusantara Ring',
     'Kalimantan · Hutan Nusantara',
     3,
     11,
+    255,
     [
       [-58, 0, 2],
       [-52, 0, -22],
@@ -66,13 +68,13 @@ export const circuits = [
     'forest'
   ),
 
-  // Garuda Speedway — sirkuit cepat dengan bagian lurus panjang
   makeCircuit(
     'garuda-speedway',
     'Garuda Speedway',
     'Jakarta · Sirkuit Kota',
     3,
     13,
+    270,
     [
       [-62, 0, -24],
       [-35, 0, -39],
@@ -91,13 +93,13 @@ export const circuits = [
     'city'
   ),
 
-  // Merapi Mountain — jalur pegunungan yang sempit dan berkelok
   makeCircuit(
     'merapi-mountain',
     'Merapi Mountain',
     'Yogyakarta · Jalur Gunung',
     3,
     10,
+    245,
     [
       [-52, 0, 8],
       [-47, 0, -16],
@@ -117,13 +119,13 @@ export const circuits = [
     'mountain'
   ),
 
-  // Raja Ampat Coast — lintasan lebar dengan bentuk seperti garis pantai
   makeCircuit(
     'raja-ampat-coast',
     'Raja Ampat Coast',
     'Papua Barat · Kepulauan',
     3,
     12,
+    260,
     [
       [-58, 0, -5],
       [-48, 0, -28],
