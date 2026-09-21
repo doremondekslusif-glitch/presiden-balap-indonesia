@@ -104,24 +104,18 @@ export class Race {
           heading
         );
 
-        // Mulai dari posisi progress yang benar-benar sesuai
-        // dengan posisi grid, bukan selalu progress 0.
-        const startProgress =
-          this.track.nearest(
-            startPosition
-          ).progress;
+        // Progress balapan dimulai dari 0 untuk semua kart.
+        // Posisi fisik grid tidak boleh dianggap sebagai
+        // progress di dekat garis finish, karena itu dapat
+        // memicu crossing palsu pada awal balapan.
+        kart.progress = 0;
+        kart.previousProgress = 0;
 
-        kart.progress =
-          startProgress;
-
-        kart.previousProgress =
-          startProgress;
-
-        // 0 = sedang menjalani LAP 1.
-        // Crossing garis start saat meninggalkan grid
-        // tidak boleh langsung dihitung sebagai lap selesai.
+        // lap = jumlah garis finish yang sudah dilewati.
+        // Jadi lap 0 ditampilkan sebagai LAP 1/3.
         kart.lap = 0;
         kart.lapArmed = false;
+        kart.lapCheckpointPassed = false;
 
         kart.finished = false;
       }
