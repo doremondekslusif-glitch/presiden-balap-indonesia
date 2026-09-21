@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { characters } from './data/characters.js';
 import { baliCircuit } from './data/circuits.js';
 import { Input } from './game/Input.js';
@@ -85,6 +86,156 @@ const hud = new Hud();
 
 let race = null;
 let selectedCharacter = characters[0];
+
+const previewContainer =
+  document.querySelector('#character-preview');
+
+const previewScene = new THREE.Scene();
+previewScene.background = new THREE.Color(0x061525);
+
+const previewCamera = new THREE.PerspectiveCamera(
+  35,
+  1,
+  0.1,
+  100
+);
+
+previewCamera.position.set(4.2, 2.8, 6);
+
+const previewRenderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true
+});
+
+previewRenderer.setPixelRatio(
+  Math.min(devicePixelRatio, 2)
+);
+
+previewRenderer.toneMapping =
+  THREE.ACESFilmicToneMapping;
+
+previewRenderer.toneMappingExposure = 1.15;
+
+previewContainer.appendChild(
+  previewRenderer.domElement
+);
+
+previewScene.add(
+  new THREE.HemisphereLight(
+    0xffffff,
+    0x182638,
+    2.8
+  )
+);
+
+const previewLight = new THREE.DirectionalLight(
+  0xffedc4,
+  3
+);
+
+previewLight.position.set(3, 6, 4);
+previewScene.add(previewLight);
+
+const previewFloor = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.65, 1.65, 0.16, 48),
+  new THREE.MeshStandardMaterial({
+    color: 0x173b58,
+    roughness: 0.65,
+    metalness: 0.15
+  })
+);
+
+previewFloor.position.y = -0.08;
+previewScene.add(previewFloor);
+
+const previewLoader = new GLTFLoader();
+let previewModel = null;
+let previewRequest = 0;
+
+function resizeCharacterPreview() {
+  const width = Math.max(
+    1,
+    previewContainer.clientWidth
+  );
+
+  const height = Math.max(
+    1,
+    previewContainer.clientHeight
+  );
+
+  previewCamera.aspect = width / height;
+  previewCamera.updateProjectionMatrix();
+
+  previewRenderer.setSize(
+    width,
+    height,
+    false
+  );
+}
+
+function showCharacterPreview(character) {
+  previewRequest++;
+
+  const requestId = previewRequest;
+
+  if (previewModel) {
+    previewScene.remove(previewModel);
+    previewModel = null;
+  }
+
+  document.querySelector(
+    '#character-preview-name'
+  ).textContent = character.name;
+
+  if (!character.model) {
+    return;
+  }
+
+  previewLoader.load(
+    character.model,
+    (gltf) => {
+      if (requestId !== previewRequest) {
+        return;
+      }
+
+      const model = gltf.scene;
+
+      model.traverse((object) => {
+        if (object.isMesh) {
+          object.castShadow = true;
+          object.receiveShadow = true;
+        }
+      });
+
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+
+      if (size.y > 0) {
+        model.scale.setScalar(3.0 / size.y);
+      }
+
+      const scaledBox =
+        new THREE.Box3().setFromObject(model);
+
+      const center =
+        scaledBox.getCenter(new THREE.Vector3());
+
+      model.position.x -= center.x;
+      model.position.z -= center.z;
+
+      const groundedBox =
+        new THREE.Box3().setFromObject(model);
+
+      model.position.y -= groundedBox.min.y;
+
+      previewModel = model;
+      previewScene.add(previewModel);
+
+      previewCamera.lookAt(0, 1.35, 0);
+    }
+  );
+}
+
 
 function state(kind) {
   const count =
@@ -241,6 +392,8 @@ function renderCharacters() {
     )
     .join('');
 
+  showCharacterPreview(selectedCharacter);
+
   document
     .querySelectorAll('.character-card')
     .forEach((card) => {
@@ -352,6 +505,8 @@ addEventListener(
       innerWidth,
       innerHeight
     );
+
+    resizeCharacterPreview();
   }
 );
 
@@ -360,8 +515,20 @@ renderer.setAnimationLoop(() => {
     race.update();
   }
 
+  if (previewModel) {
+    previewModel.rotation.y += 0.006;
+  }
+
   renderer.render(
     scene,
     camera
   );
+
+  previewRenderer.render(
+    previewScene,
+    previewCamera
+  );
 });
+
+resizeCharacterPreview();
+showCharacterPreview(selectedCharacter);
