@@ -192,7 +192,7 @@ function showCharacterPreview(character) {
   }
 
   previewLoader.load(
-    character.model,
+    character.previewModel || character.model,
     (gltf) => {
       if (requestId !== previewRequest) {
         return;
