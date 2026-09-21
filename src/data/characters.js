@@ -60,5 +60,17 @@ export const characters = [
     acceleration: 1,
     handling: 0.98,
     boost: 1.03
+  },
+  {
+    id: 'gibran',
+    name: 'Gibran',
+    category: 'Karakter',
+    avatar: '🏁',
+    kart: 'Garuda Junior',
+    color: 0x3498db,
+    speed: 1,
+    acceleration: 1.02,
+    handling: 1,
+    boost: 1.04
   }
 ];
