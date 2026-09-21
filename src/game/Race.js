@@ -117,9 +117,11 @@ export class Race {
         kart.previousProgress =
           startProgress;
 
-        // lap = jumlah lap yang sudah selesai.
-        // 0 berarti sedang menjalani LAP 1.
+        // 0 = sedang menjalani LAP 1.
+        // Crossing garis start saat meninggalkan grid
+        // tidak boleh langsung dihitung sebagai lap selesai.
         kart.lap = 0;
+        kart.lapArmed = false;
 
         kart.finished = false;
       }
