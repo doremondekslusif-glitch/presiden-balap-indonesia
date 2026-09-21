@@ -110,13 +110,26 @@ const countdownSfx = new Audio(COUNTDOWN_SFX);
 countdownSfx.preload = 'auto';
 countdownSfx.volume = 0.9;
 
-// SFX Jokowi dipakai untuk preview karakter Jokowi
-// dan sebagai klakson kendaraan pemain.
-const HORN_SFX = './owi sound.mp3';
+// SFX klakson tiap karakter.
+// SFX yang sama dipakai saat preview/pemilihan karakter
+// dan saat karakter tersebut membunyikan klakson ketika balapan.
+const HORN_SFX = {
+  prabowo: './wowok sound.mp3',
+  jokowi: './owi sound.mp3',
+  bahlil: './bahlil sound.mp3',
+  gibran: './gibran sound.mp3'
+};
 
-const hornSfx = new Audio(HORN_SFX);
-hornSfx.preload = 'auto';
-hornSfx.volume = 0.9;
+const hornSfxPlayers = new Map();
+
+Object.entries(HORN_SFX).forEach(
+  ([characterId, src]) => {
+    const player = new Audio(src);
+    player.preload = 'auto';
+    player.volume = 0.9;
+    hornSfxPlayers.set(characterId, player);
+  }
+);
 
 const savedMusicVolume = Number(
   localStorage.getItem('musicVolume')
@@ -204,7 +217,14 @@ function stopCountdownSfx() {
   countdownSfx.currentTime = 0;
 }
 
-function playHornSfx() {
+function playHornSfx(character = selectedCharacter) {
+  const hornSfx =
+    hornSfxPlayers.get(character?.id);
+
+  if (!hornSfx) {
+    return;
+  }
+
   hornSfx.pause();
   hornSfx.currentTime = 0;
   hornSfx.play().catch(() => {
@@ -569,8 +589,8 @@ function createRace() {
 
     onState: state,
 
-    onHorn: () => {
-      playHornSfx();
+    onHorn: (character) => {
+      playHornSfx(character);
     }
   });
 }
@@ -685,8 +705,8 @@ function renderCharacters() {
               item.id === card.dataset.id
           );
 
-        if (character?.id === 'jokowi') {
-          playHornSfx();
+        if (character) {
+          playHornSfx(character);
         }
       };
 
@@ -704,9 +724,7 @@ function renderCharacters() {
 
         selectedCharacter = character;
 
-        if (character.id === 'jokowi') {
-          playHornSfx();
-        }
+        playHornSfx(character);
 
         renderCharacters();
       };
