@@ -98,25 +98,69 @@ export class Kart {
     seat.castShadow = true;
     kart.add(seat);
 
-    for (const x of [-0.9, 0.9]) {
+    // ==================================================
+    // BAN
+    // ==================================================
+
+    for (const x of [-1.03, 1.03]) {
       for (const z of [-1.12, 1.18]) {
-        const wheel = new THREE.Mesh(
-          new THREE.CylinderGeometry(
+        const tire = new THREE.Mesh(
+          new THREE.TorusGeometry(
             0.38,
-            0.38,
-            0.3,
-            12
+            0.13,
+            8,
+            14
           ),
           darkMaterial
         );
 
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(x, 0.4, z);
-        wheel.userData.wheel = true;
-        wheel.castShadow = true;
-        wheel.receiveShadow = true;
+        // Sumbu ban = X
+        tire.rotation.y =
+          Math.PI / 2;
 
-        kart.add(wheel);
+        tire.position.set(
+          x,
+          0.43,
+          z
+        );
+
+        tire.userData.wheel = true;
+        tire.castShadow = true;
+        tire.receiveShadow = true;
+
+        kart.add(tire);
+
+        // Velg kecil di tengah ban
+        const rimMaterial =
+          new THREE.MeshStandardMaterial({
+            color: 0x8d949c,
+            roughness: 0.35,
+            metalness: 0.65
+          });
+
+        const rim = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            0.16,
+            0.16,
+            0.12,
+            12
+          ),
+          rimMaterial
+        );
+
+        rim.rotation.z =
+          Math.PI / 2;
+
+        rim.position.set(
+          x + (x > 0 ? 0.13 : -0.13),
+          0.43,
+          z
+        );
+
+        rim.userData.wheelRim = true;
+        rim.castShadow = true;
+
+        kart.add(rim);
       }
     }
 
@@ -697,7 +741,9 @@ export class Kart {
     this.mesh.traverse(
       (object) => {
         if (object.userData.wheel) {
-          object.rotation.y -=
+          // Ban berputar pada sumbu aslinya (X),
+          // bukan sumbu Y.
+          object.rotation.x -=
             this.speed *
             dt *
             2;
