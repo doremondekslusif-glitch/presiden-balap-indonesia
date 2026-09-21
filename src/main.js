@@ -110,6 +110,14 @@ const countdownSfx = new Audio(COUNTDOWN_SFX);
 countdownSfx.preload = 'auto';
 countdownSfx.volume = 0.9;
 
+// SFX Jokowi dipakai untuk preview karakter Jokowi
+// dan sebagai klakson kendaraan pemain.
+const HORN_SFX = './owi sound.mp3';
+
+const hornSfx = new Audio(HORN_SFX);
+hornSfx.preload = 'auto';
+hornSfx.volume = 0.9;
+
 const savedMusicVolume = Number(
   localStorage.getItem('musicVolume')
 );
@@ -194,6 +202,14 @@ function playCountdownSfx() {
 function stopCountdownSfx() {
   countdownSfx.pause();
   countdownSfx.currentTime = 0;
+}
+
+function playHornSfx() {
+  hornSfx.pause();
+  hornSfx.currentTime = 0;
+  hornSfx.play().catch(() => {
+    // Browser dapat menolak pemutaran sampai ada interaksi pengguna.
+  });
 }
 
 applyMusicSettings();
@@ -551,7 +567,11 @@ function createRace() {
       camera.updateProjectionMatrix();
     },
 
-    onState: state
+    onState: state,
+
+    onHorn: () => {
+      playHornSfx();
+    }
   });
 }
 
@@ -658,6 +678,18 @@ function renderCharacters() {
   document
     .querySelectorAll('.character-card')
     .forEach((card) => {
+      card.onmouseenter = () => {
+        const character =
+          characters.find(
+            (item) =>
+              item.id === card.dataset.id
+          );
+
+        if (character?.id === 'jokowi') {
+          playHornSfx();
+        }
+      };
+
       card.onclick = () => {
         const character =
           characters.find(
@@ -671,6 +703,11 @@ function renderCharacters() {
         }
 
         selectedCharacter = character;
+
+        if (character.id === 'jokowi') {
+          playHornSfx();
+        }
+
         renderCharacters();
       };
     });
