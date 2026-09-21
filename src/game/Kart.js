@@ -544,11 +544,14 @@ if (
       ? 1
       : -1;
 
-  this.heading +=
-    steer *
+  const turnRate =
     1.65 *
     this.handling *
-    steeringStrength *
+    steeringStrength;
+
+  this.heading -=
+    steer *
+    turnRate *
     dt *
     direction;
 }
