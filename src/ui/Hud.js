@@ -150,10 +150,15 @@ export class Hud {
 
         c.stroke();
       } else {
+        const fallbackColor =
+          kart.character?.color ??
+          (kart === player ? 0xe63946 : 0xe9eef5);
+
         c.fillStyle =
-          kart === player
-            ? '#e63946'
-            : '#e9eef5';
+          '#' +
+          Number(fallbackColor)
+            .toString(16)
+            .padStart(6, '0');
 
         c.beginPath();
 
