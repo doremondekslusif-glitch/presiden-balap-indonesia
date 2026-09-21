@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { characters } from './data/characters.js';
-import { baliCircuit } from './data/circuits.js';
+import { circuits } from './data/circuits.js';
 import { Input } from './game/Input.js';
 import { Race } from './game/Race.js';
 import { Hud } from './ui/Hud.js';
@@ -87,6 +87,7 @@ const hud = new Hud();
 
 let race = null;
 let selectedCharacter = characters[0];
+let selectedCircuit = circuits[0];
 
 const previewContainer =
   document.querySelector('#character-preview');
@@ -415,7 +416,7 @@ function createRace() {
     scene,
     camera,
     input,
-    circuit: baliCircuit,
+    circuit: selectedCircuit,
     characters: roster,
 
     onUpdate: (currentRace) => {
@@ -445,12 +446,46 @@ function showMenu() {
     .classList.add('hidden');
 
   document
+    .querySelector('#circuit-select')
+    .classList.add('hidden');
+
+  document
     .querySelector('#hud')
     .classList.add('hidden');
 
   document
     .querySelector('#menu')
     .classList.remove('hidden');
+}
+
+function renderCircuits() {
+  const container = document.querySelector('#circuit-cards');
+
+  container.innerHTML = circuits.map((circuit) => `
+    <article class="circuit-card ${circuit.id === selectedCircuit.id ? 'selected' : ''}" data-id="${circuit.id}">
+      <div class="circuit-preview">
+        <svg viewBox="0 0 240 120" aria-label="${circuit.name}">
+          <polyline points="${circuit.points.map((p) => `${120 + p[0] * 1.9},${60 + p[2] * 1.25}`).join(' ')}" />
+        </svg>
+      </div>
+      <div class="circuit-info">
+        <b>${circuit.name}</b>
+        <span>${circuit.laps} LAP · LEBAR ${circuit.width}M</span>
+      </div>
+    </article>
+  `).join('');
+
+  document.querySelector('#menu-circuit-name').textContent = selectedCircuit.name;
+  document.querySelector('#minimap-circuit-name').textContent = selectedCircuit.name.toUpperCase();
+
+  document.querySelectorAll('.circuit-card').forEach((card) => {
+    card.onclick = () => {
+      const circuit = circuits.find((item) => item.id === card.dataset.id);
+      if (!circuit) return;
+      selectedCircuit = circuit;
+      renderCircuits();
+    };
+  });
 }
 
 function renderCharacters() {
@@ -542,12 +577,16 @@ document.querySelector(
     .classList.remove('hidden');
 };
 
-document.querySelector(
-  '#choose-circuit'
-).onclick = () => {
-  alert(
-    'Bali Circuit tersedia pada prototype ini.'
-  );
+document.querySelector('#choose-circuit').onclick = () => {
+  renderCircuits();
+
+  document.querySelector('#menu').classList.add('hidden');
+  document.querySelector('#circuit-select').classList.remove('hidden');
+};
+
+document.querySelector('#circuit-back').onclick = () => {
+  document.querySelector('#circuit-select').classList.add('hidden');
+  document.querySelector('#menu').classList.remove('hidden');
 };
 
 document.querySelector(
