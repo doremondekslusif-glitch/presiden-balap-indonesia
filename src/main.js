@@ -107,23 +107,31 @@ const previewCamera = new THREE.PerspectiveCamera(
 
 previewCamera.position.set(4.2, 2.8, 6);
 
-const previewRenderer = new THREE.WebGLRenderer({
-  antialias: true,
-  alpha: true
-});
+let previewRenderer = null;
 
-previewRenderer.setPixelRatio(
-  Math.min(devicePixelRatio, 2)
-);
+function ensurePreviewRenderer() {
+  if (previewRenderer) {
+    return;
+  }
 
-previewRenderer.toneMapping =
-  THREE.ACESFilmicToneMapping;
+  previewRenderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true
+  });
 
-previewRenderer.toneMappingExposure = 1.15;
+  previewRenderer.setPixelRatio(
+    Math.min(devicePixelRatio, 1.5)
+  );
 
-previewContainer.appendChild(
-  previewRenderer.domElement
-);
+  previewRenderer.toneMapping =
+    THREE.ACESFilmicToneMapping;
+
+  previewRenderer.toneMappingExposure = 1.15;
+
+  previewContainer.appendChild(
+    previewRenderer.domElement
+  );
+}
 
 previewScene.add(
   new THREE.HemisphereLight(
@@ -163,10 +171,15 @@ function showInitialCharacterPreviewPlaceholder() {
   document.querySelector('#character-preview-name').textContent =
     selectedCharacter.name;
 
+  ensurePreviewRenderer();
   previewRenderer.setClearColor(0x061525, 1);
 }
 
 function resizeCharacterPreview() {
+  if (!previewRenderer) {
+    return;
+  }
+
   const width = Math.max(
     1,
     previewContainer.clientWidth
@@ -478,7 +491,6 @@ function renderCharacters() {
     .join('');
 
   showCharacterPreview(selectedCharacter);
-  preloadCharacterPreviews();
 
   document
     .querySelectorAll('.character-card')
@@ -505,6 +517,7 @@ document.querySelector(
   '#choose-character'
 ).onclick = () => {
   renderCharacters();
+  preloadCharacterPreviews();
 
   document
     .querySelector('#menu')
@@ -610,13 +623,12 @@ renderer.setAnimationLoop(() => {
     camera
   );
 
-  previewRenderer.render(
-    previewScene,
-    previewCamera
-  );
+  if (previewRenderer) {
+    previewRenderer.render(
+      previewScene,
+      previewCamera
+    );
+  }
 });
 
-resizeCharacterPreview();
 showInitialCharacterPreviewPlaceholder();
-showCharacterPreview(selectedCharacter);
-preloadCharacterPreviews();
