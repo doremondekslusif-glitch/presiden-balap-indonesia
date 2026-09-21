@@ -237,12 +237,88 @@ export class Race {
               return;
             }
 
+            const player = this.karts[0];
+
+            // AI mencari pembalap di depan dan mencoba menyalip
+            // dari sisi yang berbeda agar tidak bergerak berbaris.
+            const currentScore =
+              this.progressScore(kart);
+
+            const rival = this.karts
+              .filter(
+                (other) =>
+                  other !== kart &&
+                  !other.finished &&
+                  this.progressScore(other) > currentScore &&
+                  this.progressScore(other) - currentScore < 0.28
+              )
+              .sort(
+                (a, b) =>
+                  this.progressScore(a) -
+                  this.progressScore(b)
+              )[0] || null;
+
+            const laneWave =
+              Math.sin(
+                this.elapsed * 0.7 +
+                index * 2.1
+              ) * 1.45;
+
+            let laneOffset = laneWave;
+
+            if (rival) {
+              const passingSide =
+                Math.sin(
+                  this.elapsed * 0.9 +
+                  index * 3.7
+                ) >= 0
+                  ? 1
+                  : -1;
+
+              laneOffset =
+                passingSide * 2.8;
+            }
+
+            const playerGap =
+              player
+                ? this.progressScore(player) -
+                  currentScore
+                : 0;
+
+            kart.aiRaceFactor =
+              THREE.MathUtils.clamp(
+                1 +
+                playerGap * 0.12,
+                0.96,
+                1.055
+              );
+
+            const targetProgress =
+              kart.progress +
+              0.035 +
+              index * 0.0015;
+
             const target =
               this.track.point(
-                kart.progress +
-                0.018 +
-                index * 0.001
+                targetProgress
               );
+
+            const tangent =
+              this.track.curve.getTangentAt(
+                ((targetProgress % 1) + 1) % 1
+              ).normalize();
+
+            const side =
+              new THREE.Vector3(
+                -tangent.z,
+                0,
+                tangent.x
+              );
+
+            target.addScaledVector(
+              side,
+              laneOffset
+            );
 
             kart.updateAI(
               dt,
