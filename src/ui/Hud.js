@@ -104,7 +104,7 @@ export class Hud {
         );
 
       const radius =
-        kart === player ? 11 : 9;
+        kart === player ? 16 : 14;
 
       if (icon && icon.complete) {
         c.save();
@@ -158,7 +158,7 @@ export class Hud {
         c.arc(
           x,
           y,
-          kart === player ? 5 : 3,
+          kart === player ? 6 : 5,
           0,
           Math.PI * 2
         );
