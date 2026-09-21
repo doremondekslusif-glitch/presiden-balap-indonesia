@@ -2,14 +2,14 @@ export class Input {
   constructor() {
     this.keys = new Set();
 
-    addEventListener('keydown', (e) => {
-      // Simpan format event.code
-      this.keys.add(e.code);
+    this.handleKeyDown = (event) => {
+      this.keys.add(event.code);
 
-      // Simpan juga format e.key yang dinormalisasi
-      this.keys.add(
-        e.key.toLowerCase()
-      );
+      if (event.key) {
+        this.keys.add(
+          event.key.toLowerCase()
+        );
+      }
 
       if (
         [
@@ -18,33 +18,73 @@ export class Input {
           'ArrowLeft',
           'ArrowRight',
           'Space'
-        ].includes(e.code)
+        ].includes(event.code)
       ) {
-        e.preventDefault();
+        event.preventDefault();
       }
-    });
+    };
 
-    addEventListener('keyup', (e) => {
-      this.keys.delete(e.code);
+    this.handleKeyUp = (event) => {
+      this.keys.delete(event.code);
 
-      this.keys.delete(
-        e.key.toLowerCase()
-      );
-    });
+      if (event.key) {
+        this.keys.delete(
+          event.key.toLowerCase()
+        );
+      }
+    };
 
-    addEventListener('blur', () => {
+    this.handleBlur = () => {
       this.keys.clear();
-    });
+    };
+
+    window.addEventListener(
+      'keydown',
+      this.handleKeyDown
+    );
+
+    window.addEventListener(
+      'keyup',
+      this.handleKeyUp
+    );
+
+    window.addEventListener(
+      'blur',
+      this.handleBlur
+    );
   }
 
   down(...keys) {
     return keys.some((key) => {
+      if (!key) {
+        return false;
+      }
+
       return (
         this.keys.has(key) ||
         this.keys.has(
-          key.toLowerCase()
+          String(key).toLowerCase()
         )
       );
     });
+  }
+
+  destroy() {
+    window.removeEventListener(
+      'keydown',
+      this.handleKeyDown
+    );
+
+    window.removeEventListener(
+      'keyup',
+      this.handleKeyUp
+    );
+
+    window.removeEventListener(
+      'blur',
+      this.handleBlur
+    );
+
+    this.keys.clear();
   }
 }
