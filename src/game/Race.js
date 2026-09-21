@@ -10,7 +10,8 @@ export class Race {
     circuit,
     characters,
     onUpdate,
-    onState
+    onState,
+    onHorn
   }) {
     this.scene = scene;
     this.camera = camera;
@@ -44,6 +45,11 @@ export class Race {
 
     this.onState =
       onState || (() => {});
+
+    this.onHorn =
+      onHorn || (() => {});
+
+    this.hornWasDown = false;
 
     this.clock =
       new THREE.Clock();
@@ -220,6 +226,17 @@ export class Race {
           this.input,
           this.track
         );
+
+        // Klakson memakai tombol H dan hanya berbunyi
+        // sekali setiap kali tombol ditekan.
+        const hornDown =
+          this.input.down('KeyH', 'h');
+
+        if (hornDown && !this.hornWasDown) {
+          this.onHorn();
+        }
+
+        this.hornWasDown = hornDown;
 
         this.checkFinish(
           player
