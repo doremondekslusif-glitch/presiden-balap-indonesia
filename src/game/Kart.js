@@ -29,6 +29,7 @@ export class Kart {
     this.boostPower = character.boost ?? 1;
 
     this.mesh = this.makeMesh();
+    this.addNameTag();
   }
 
   makeMesh() {
@@ -100,10 +101,6 @@ export class Kart {
     seat.castShadow = true;
     kart.add(seat);
 
-    // ==================================================
-    // BAN
-    // ==================================================
-
     for (const x of [-1.03, 1.03]) {
       for (const z of [-1.12, 1.18]) {
         const tire = new THREE.Mesh(
@@ -116,23 +113,13 @@ export class Kart {
           darkMaterial
         );
 
-        // Sumbu ban = X
-        tire.rotation.y =
-          Math.PI / 2;
-
-        tire.position.set(
-          x,
-          0.43,
-          z
-        );
-
+        tire.rotation.y = Math.PI / 2;
+        tire.position.set(x, 0.43, z);
         tire.userData.wheel = true;
         tire.castShadow = true;
         tire.receiveShadow = true;
-
         kart.add(tire);
 
-        // Velg kecil di tengah ban
         const rimMaterial =
           new THREE.MeshStandardMaterial({
             color: 0x8d949c,
@@ -150,9 +137,7 @@ export class Kart {
           rimMaterial
         );
 
-        rim.rotation.z =
-          Math.PI / 2;
-
+        rim.rotation.z = Math.PI / 2;
         rim.position.set(
           x + (x > 0 ? 0.13 : -0.13),
           0.43,
@@ -161,7 +146,6 @@ export class Kart {
 
         rim.userData.wheelRim = true;
         rim.castShadow = true;
-
         kart.add(rim);
       }
     }
@@ -178,7 +162,6 @@ export class Kart {
 
     steering.rotation.x = Math.PI / 2;
     steering.position.set(0, 1.36, 0.62);
-
     kart.add(steering);
 
     if (this.character.model) {
@@ -191,6 +174,70 @@ export class Kart {
     }
 
     return kart;
+  }
+
+  addNameTag() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 128;
+
+    const context = canvas.getContext('2d');
+
+    context.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    context.fillStyle = 'rgba(4, 18, 31, 0.9)';
+    context.strokeStyle = '#f5c541';
+    context.lineWidth = 5;
+
+    const radius = 24;
+    context.beginPath();
+    context.roundRect(
+      8,
+      8,
+      canvas.width - 16,
+      canvas.height - 16,
+      radius
+    );
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = '#ffffff';
+    context.font =
+      '900 52px Arial, sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(
+      this.character.name.toUpperCase(),
+      canvas.width / 2,
+      canvas.height / 2 + 2
+    );
+
+    const texture =
+      new THREE.CanvasTexture(canvas);
+
+    texture.colorSpace =
+      THREE.SRGBColorSpace;
+
+    const material =
+      new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthTest: false
+      });
+
+    const label =
+      new THREE.Sprite(material);
+
+    label.name = 'character-name';
+    label.scale.set(3.25, 0.82, 1);
+    label.position.set(0, 3.55, 0);
+
+    this.mesh.add(label);
   }
 
   addGenericCharacter(kart) {
@@ -405,7 +452,9 @@ export class Kart {
       new THREE.Vector3()
     );
 
-    const targetHeight = 2.35;
+    // Sedikit diperbesar supaya karakter lebih jelas
+    // dibandingkan ukuran sebelumnya.
+    const targetHeight = 2.7;
 
     if (size.y > 0) {
       const scale =
@@ -440,12 +489,8 @@ export class Kart {
 
   reset(position, heading) {
     this.mesh.position.copy(position);
-
     this.heading = heading;
-
-    this.mesh.rotation.y =
-      this.heading;
-
+    this.mesh.rotation.y = this.heading;
     this.speed = 0;
     this.lap = 0;
     this.progress = 0;
@@ -495,13 +540,11 @@ export class Kart {
       this.boost > 0 &&
       this.speed > 2;
 
-    // GAS
     if (forward) {
       this.speed +=
         this.acceleration * dt;
     }
 
-    // REM / MUNDUR
     if (backward) {
       if (this.speed > 0) {
         this.speed -=
@@ -516,7 +559,6 @@ export class Kart {
       }
     }
 
-    // FRICTION
     if (!forward && !backward) {
       this.speed *= Math.pow(
         0.985,
@@ -524,7 +566,6 @@ export class Kart {
       );
     }
 
-    // BOOST
     const topSpeed =
       this.maxSpeed *
       (
@@ -561,7 +602,6 @@ export class Kart {
         topSpeed
       );
 
-    // STEERING
     let steer = 0;
 
     if (left) {
@@ -745,8 +785,6 @@ export class Kart {
     this.mesh.traverse(
       (object) => {
         if (object.userData.wheel) {
-          // Ban berputar pada sumbu aslinya (X),
-          // bukan sumbu Y.
           object.rotation.x -=
             this.speed *
             dt *
@@ -761,10 +799,6 @@ export class Kart {
     this.progress =
       nearest.progress;
 
-    // Kart wajib melewati checkpoint setelah garis start
-    // sebelum crossing berikutnya boleh dihitung sebagai lap.
-    // Ini mencegah posisi grid yang berada dekat garis start
-    // langsung dianggap sudah menyelesaikan satu putaran.
     if (
       !this.lapCheckpointPassed &&
       this.progress > 0.30 &&
@@ -774,8 +808,6 @@ export class Kart {
       this.lapCheckpointPassed = true;
     }
 
-    // Lap hanya bertambah saat benar-benar melewati
-    // garis start/finish dari arah balapan yang benar.
     if (
       this.lapCheckpointPassed &&
       this.previousProgress > 0.85 &&
