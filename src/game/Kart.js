@@ -521,11 +521,11 @@ export class Kart {
 let steer = 0;
 
 if (left) {
-  steer += 1;
+  steer = -1;
 }
 
 if (right) {
-  steer -= 1;
+  steer = 1;
 }
 
 const steeringStrength =
@@ -556,7 +556,7 @@ if (
     direction;
 }
 
-    this.move(dt, track);
+this.move(dt, track);
   }
 
   updateAI(dt, track, target) {
