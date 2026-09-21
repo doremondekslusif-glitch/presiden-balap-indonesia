@@ -311,6 +311,9 @@ previewScene.add(previewFloor);
 const previewLoader = new GLTFLoader();
 const previewCache = new Map();
 let previewModel = null;
+let mapIconRenderer = null;
+let mapIconScene = null;
+let mapIconCamera = null;
 let previewRequest = 0;
 let previewPreloadStarted = false;
 
@@ -408,6 +411,163 @@ function loadPreviewAsset(character) {
 
   previewCache.set(url, promise);
   return promise;
+}
+
+function ensureMapIconRenderer() {
+  if (mapIconRenderer) {
+    return;
+  }
+
+  mapIconRenderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    preserveDrawingBuffer: true
+  });
+
+  mapIconRenderer.setPixelRatio(1);
+  mapIconRenderer.setSize(128, 128, false);
+  mapIconRenderer.setClearColor(0x000000, 0);
+
+  mapIconRenderer.toneMapping =
+    THREE.ACESFilmicToneMapping;
+
+  mapIconRenderer.toneMappingExposure = 1.15;
+
+  mapIconScene = new THREE.Scene();
+
+  mapIconScene.add(
+    new THREE.HemisphereLight(
+      0xffffff,
+      0x4a5b70,
+      2.8
+    )
+  );
+
+  const light =
+    new THREE.DirectionalLight(
+      0xffffff,
+      3
+    );
+
+  light.position.set(2, 5, 4);
+  mapIconScene.add(light);
+
+  mapIconCamera =
+    new THREE.OrthographicCamera(
+      -1.25,
+      1.25,
+      2.9,
+      0.55,
+      0.1,
+      20
+    );
+
+  mapIconCamera.position.set(
+    0,
+    1.75,
+    6
+  );
+
+  mapIconCamera.lookAt(
+    0,
+    1.75,
+    0
+  );
+}
+
+async function createCharacterMapIcon(character) {
+  const source =
+    await loadPreviewAsset(character);
+
+  if (!source) {
+    return null;
+  }
+
+  ensureMapIconRenderer();
+
+  const model =
+    preparePreviewScene(source);
+
+  mapIconScene.clear();
+
+  mapIconScene.add(
+    new THREE.HemisphereLight(
+      0xffffff,
+      0x4a5b70,
+      2.8
+    )
+  );
+
+  const light =
+    new THREE.DirectionalLight(
+      0xffffff,
+      3
+    );
+
+  light.position.set(2, 5, 4);
+  mapIconScene.add(light);
+  mapIconScene.add(model);
+
+  mapIconCamera.position.set(
+    0,
+    1.75,
+    6
+  );
+
+  mapIconCamera.lookAt(
+    0,
+    1.75,
+    0
+  );
+
+  mapIconRenderer.clear();
+  mapIconRenderer.render(
+    mapIconScene,
+    mapIconCamera
+  );
+
+  const imageSource =
+    mapIconRenderer.domElement.toDataURL(
+      'image/png'
+    );
+
+  mapIconScene.remove(model);
+
+  return imageSource;
+}
+
+function preloadCharacterMapIcons() {
+  characters.forEach((character, index) => {
+    const loadIcon = () => {
+      createCharacterMapIcon(character)
+        .then((imageSource) => {
+          if (imageSource) {
+            hud.setCharacterIcon(
+              character.id,
+              imageSource
+            );
+          }
+        })
+        .catch(() => {
+          // Jika ikon gagal dirender,
+          // minimap tetap memakai marker cadangan.
+        });
+    };
+
+    if (index === 0) {
+      loadIcon();
+    } else if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(
+        loadIcon,
+        { timeout: 1200 + index * 300 }
+      );
+    } else {
+      setTimeout(
+        loadIcon,
+        250 * index
+      );
+    }
+  });
 }
 
 function showCharacterPreview(character) {
@@ -901,6 +1061,7 @@ renderer.setAnimationLoop(() => {
 });
 
 showInitialCharacterPreviewPlaceholder();
+preloadCharacterMapIcons();
 
 // Coba mulai musik home segera saat game dibuka.
 // Jika browser memblokir autoplay, interaksi pertama pengguna
