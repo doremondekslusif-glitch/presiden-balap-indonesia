@@ -35,10 +35,20 @@ export class Track {
     // GROUND
     // ==================================================
 
+    const theme = this.spec.theme || 'bali';
+
+    const groundColors = {
+      bali: 0x63a651,
+      forest: 0x416f3f,
+      city: 0x52585f,
+      mountain: 0x64734d,
+      island: 0x7eaa5b
+    };
+
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(230, 190),
       new THREE.MeshStandardMaterial({
-        color: 0x63a651,
+        color: groundColors[theme] || groundColors.bali,
         roughness: 1
       })
     );
@@ -885,6 +895,23 @@ export class Track {
   // ==================================================
 
   addScenery(group) {
+    const theme = this.spec.theme || 'bali';
+
+    if (theme === 'city') {
+      this.addCityScenery(group);
+      return;
+    }
+
+    if (theme === 'mountain') {
+      this.addMountainScenery(group);
+      return;
+    }
+
+    if (theme === 'island') {
+      this.addIslandScenery(group);
+      return;
+    }
+
     const trunkMaterial =
       new THREE.MeshStandardMaterial({
         color: 0x765238
@@ -1047,6 +1074,143 @@ export class Track {
     );
 
     group.add(mountain);
+  }
+
+
+
+  addCityScenery(group) {
+    const buildingMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0x8a9098 }),
+      new THREE.MeshStandardMaterial({ color: 0xb8a98d }),
+      new THREE.MeshStandardMaterial({ color: 0x59636e })
+    ];
+
+    for (let i = 0; i < 28; i++) {
+      const angle = i * 2.399;
+      const radius = 58 + (i % 4) * 8;
+      const h = 8 + (i % 6) * 3;
+      const building = new THREE.Mesh(
+        new THREE.BoxGeometry(5 + (i % 3) * 2, h, 5 + (i % 2) * 2),
+        buildingMaterials[i % buildingMaterials.length]
+      );
+      building.position.set(
+        Math.cos(angle) * radius,
+        h / 2,
+        Math.sin(angle) * radius
+      );
+      group.add(building);
+    }
+
+    const lampMaterial = new THREE.MeshStandardMaterial({ color: 0x20252a });
+    const lampLight = new THREE.MeshBasicMaterial({ color: 0xffe9a6 });
+
+    for (let i = 0; i < 18; i++) {
+      const angle = i * 2.7;
+      const radius = 52;
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.16, 5, 8),
+        lampMaterial
+      );
+      pole.position.set(Math.cos(angle) * radius, 2.5, Math.sin(angle) * radius);
+      group.add(pole);
+
+      const light = new THREE.Mesh(
+        new THREE.BoxGeometry(0.7, 0.2, 0.4),
+        lampLight
+      );
+      light.position.set(Math.cos(angle) * radius, 5, Math.sin(angle) * radius);
+      group.add(light);
+    }
+  }
+
+  addMountainScenery(group) {
+    const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x596653 });
+    const snowMaterial = new THREE.MeshStandardMaterial({ color: 0xc9d0c5 });
+
+    for (let i = 0; i < 10; i++) {
+      const angle = i * 0.63;
+      const radius = 70 + (i % 3) * 8;
+      const mountain = new THREE.Mesh(
+        new THREE.ConeGeometry(10 + (i % 3) * 4, 20 + (i % 4) * 5, 7),
+        rockMaterial
+      );
+      mountain.position.set(
+        Math.cos(angle) * radius,
+        10 + (i % 4) * 2,
+        Math.sin(angle) * radius
+      );
+      group.add(mountain);
+
+      if (i % 2 === 0) {
+        const cap = new THREE.Mesh(
+          new THREE.ConeGeometry(3, 4, 7),
+          snowMaterial
+        );
+        cap.position.set(
+          mountain.position.x,
+          mountain.position.y + 11,
+          mountain.position.z
+        );
+        group.add(cap);
+      }
+    }
+  }
+
+  addIslandScenery(group) {
+    const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x776c58 });
+    const palmTrunk = new THREE.MeshStandardMaterial({ color: 0x765238 });
+    const palmLeaf = new THREE.MeshStandardMaterial({ color: 0x207b42 });
+
+    const ocean = new THREE.Mesh(
+      new THREE.PlaneGeometry(220, 190),
+      new THREE.MeshStandardMaterial({
+        color: 0x159bd3,
+        roughness: 0.2,
+        metalness: 0.05
+      })
+    );
+    ocean.rotation.x = -Math.PI / 2;
+    ocean.position.y = -0.2;
+    group.add(ocean);
+
+    for (let i = 0; i < 22; i++) {
+      const angle = i * 2.17;
+      const radius = 58 + (i % 4) * 6;
+
+      const rock = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(2 + (i % 3)),
+        rockMaterial
+      );
+      rock.position.set(
+        Math.cos(angle) * radius,
+        1.5,
+        Math.sin(angle) * radius
+      );
+      group.add(rock);
+
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.4, 4, 7),
+        palmTrunk
+      );
+      trunk.position.set(
+        Math.cos(angle) * (radius + 3),
+        2,
+        Math.sin(angle) * (radius + 3)
+      );
+      group.add(trunk);
+
+      const leaves = new THREE.Mesh(
+        new THREE.SphereGeometry(2.2, 7, 4),
+        palmLeaf
+      );
+      leaves.position.set(
+        trunk.position.x,
+        4.8,
+        trunk.position.z
+      );
+      leaves.scale.y = 0.45;
+      group.add(leaves);
+    }
   }
 
   // ==================================================
