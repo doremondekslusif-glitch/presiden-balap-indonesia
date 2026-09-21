@@ -1,7 +1,5 @@
-```js
 import * as THREE from 'three';
-import { Track } from './Track.js';
-import { Kart } from './Kart.js?v=2';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const gltfLoader = new GLTFLoader();
 
@@ -23,181 +21,94 @@ export class Kart {
     this.finished = false;
     this.boost = 100;
 
-    this.maxSpeed =
-      15 * (character.speed ?? 1);
-
-    this.acceleration =
-      8 * (character.acceleration ?? 1);
-
-    this.handling =
-      character.handling ?? 1;
-
-    this.boostPower =
-      character.boost ?? 1;
+    this.maxSpeed = 15 * (character.speed ?? 1);
+    this.acceleration = 8 * (character.acceleration ?? 1);
+    this.handling = character.handling ?? 1;
+    this.boostPower = character.boost ?? 1;
 
     this.mesh = this.makeMesh();
   }
 
+  // =========================================================
+  // BUAT KART
+  // =========================================================
+
   makeMesh() {
     const kart = new THREE.Group();
 
-    // ==========================================================
-    // MATERIAL
-    // ==========================================================
+    const paintMaterial = new THREE.MeshStandardMaterial({
+      color: this.character.color ?? 0xff3333,
+      roughness: 0.28,
+      metalness: 0.25
+    });
 
-    const paintMaterial =
-      new THREE.MeshStandardMaterial({
-        color: this.character.color,
-        roughness: 0.28,
-        metalness: 0.25
-      });
+    const darkMaterial = new THREE.MeshStandardMaterial({
+      color: 0x15171b,
+      roughness: 0.75,
+      metalness: 0.05
+    });
 
-    const darkMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0x15171b,
-        roughness: 0.75,
-        metalness: 0.05
-      });
-
-    // ==========================================================
     // BODY
-    // ==========================================================
-
     const body = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        2.15,
-        0.42,
-        3.35
-      ),
+      new THREE.BoxGeometry(2.15, 0.42, 3.35),
       paintMaterial
     );
 
-    body.position.set(
-      0,
-      0.62,
-      0
-    );
-
+    body.position.set(0, 0.62, 0);
     body.castShadow = true;
     body.receiveShadow = true;
-
     kart.add(body);
 
-    // ==========================================================
     // NOSE
-    // ==========================================================
-
     const nose = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        1.72,
-        0.28,
-        0.7
-      ),
+      new THREE.BoxGeometry(1.72, 0.28, 0.7),
       paintMaterial
     );
 
-    nose.position.set(
-      0,
-      0.56,
-      1.88
-    );
-
+    nose.position.set(0, 0.56, 1.88);
     nose.castShadow = true;
-
     kart.add(nose);
 
-    // ==========================================================
     // BUMPER
-    // ==========================================================
-
     const bumper = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        2.38,
-        0.16,
-        0.22
-      ),
+      new THREE.BoxGeometry(2.38, 0.16, 0.22),
       darkMaterial
     );
 
-    bumper.position.set(
-      0,
-      0.43,
-      2.23
-    );
-
+    bumper.position.set(0, 0.43, 2.23);
     kart.add(bumper);
 
-    // ==========================================================
     // SPOILER
-    // ==========================================================
-
     const spoiler = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        1.8,
-        0.16,
-        0.35
-      ),
+      new THREE.BoxGeometry(1.8, 0.16, 0.35),
       paintMaterial
     );
 
-    spoiler.position.set(
-      0,
-      1.32,
-      -1.5
-    );
-
+    spoiler.position.set(0, 1.32, -1.5);
     kart.add(spoiler);
 
-    // ==========================================================
     // SPOILER POSTS
-    // ==========================================================
-
     for (const x of [-0.9, 0.9]) {
       const post = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.1,
-          0.7,
-          0.1
-        ),
+        new THREE.BoxGeometry(0.1, 0.7, 0.1),
         darkMaterial
       );
 
-      post.position.set(
-        x,
-        1.02,
-        -1.43
-      );
-
+      post.position.set(x, 1.02, -1.43);
       kart.add(post);
     }
 
-    // ==========================================================
     // SEAT
-    // ==========================================================
-
     const seat = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        1.1,
-        0.66,
-        1.05
-      ),
+      new THREE.BoxGeometry(1.1, 0.66, 1.05),
       darkMaterial
     );
 
-    seat.position.set(
-      0,
-      1.0,
-      -0.22
-    );
-
+    seat.position.set(0, 1.0, -0.22);
     seat.castShadow = true;
-
     kart.add(seat);
 
-    // ==========================================================
     // WHEELS
-    // ==========================================================
-
     for (const x of [-0.9, 0.9]) {
       for (const z of [-1.12, 1.18]) {
         const wheel = new THREE.Mesh(
@@ -210,27 +121,19 @@ export class Kart {
           darkMaterial
         );
 
-        wheel.rotation.z =
-          Math.PI / 2;
-
-        wheel.position.set(
-          x,
-          0.4,
-          z
-        );
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, 0.4, z);
 
         wheel.userData.wheel = true;
 
         wheel.castShadow = true;
+        wheel.receiveShadow = true;
 
         kart.add(wheel);
       }
     }
 
-    // ==========================================================
     // STEERING
-    // ==========================================================
-
     const steering = new THREE.Mesh(
       new THREE.TorusGeometry(
         0.3,
@@ -241,21 +144,12 @@ export class Kart {
       darkMaterial
     );
 
-    steering.rotation.x =
-      Math.PI / 2;
-
-    steering.position.set(
-      0,
-      1.36,
-      0.62
-    );
+    steering.rotation.x = Math.PI / 2;
+    steering.position.set(0, 1.36, 0.62);
 
     kart.add(steering);
 
-    // ==========================================================
     // CHARACTER
-    // ==========================================================
-
     if (this.character.model) {
       this.loadCharacterModel(
         kart,
@@ -268,29 +162,25 @@ export class Kart {
     return kart;
   }
 
-  // ============================================================
-  // GENERIC CHARACTER
-  // ============================================================
+  // =========================================================
+  // KARAKTER GENERIK
+  // =========================================================
 
   addGenericCharacter(kart) {
-    const skinMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0xe8ae82,
-        roughness: 0.8
-      });
+    const skinMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe8ae82,
+      roughness: 0.8
+    });
 
-    const shirtMaterial =
-      new THREE.MeshStandardMaterial({
-        color: this.character.color,
-        roughness: 0.7
-      });
+    const shirtMaterial = new THREE.MeshStandardMaterial({
+      color: this.character.color ?? 0xff3333,
+      roughness: 0.7
+    });
 
-    const darkMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0x15171b,
-        roughness: 0.75,
-        metalness: 0.05
-      });
+    const darkMaterial = new THREE.MeshStandardMaterial({
+      color: 0x15171b,
+      roughness: 0.75
+    });
 
     // TORSO
     const torso = new THREE.Mesh(
@@ -303,12 +193,7 @@ export class Kart {
       shirtMaterial
     );
 
-    torso.position.set(
-      0,
-      1.55,
-      -0.1
-    );
-
+    torso.position.set(0, 1.55, -0.1);
     torso.castShadow = true;
 
     kart.add(torso);
@@ -323,12 +208,7 @@ export class Kart {
       skinMaterial
     );
 
-    head.position.set(
-      0,
-      2.2,
-      -0.03
-    );
-
+    head.position.set(0, 2.2, -0.03);
     head.castShadow = true;
 
     kart.add(head);
@@ -347,17 +227,12 @@ export class Kart {
       darkMaterial
     );
 
-    hair.position.set(
-      0,
-      2.28,
-      -0.03
-    );
-
+    hair.position.set(0, 2.28, -0.03);
     hair.castShadow = true;
 
     kart.add(hair);
 
-    // ARMS + LEGS
+    // TANGAN + KAKI
     for (const x of [-0.38, 0.38]) {
       const arm = new THREE.Mesh(
         new THREE.CylinderGeometry(
@@ -369,14 +244,8 @@ export class Kart {
         skinMaterial
       );
 
-      arm.position.set(
-        x,
-        1.55,
-        0.36
-      );
-
-      arm.rotation.z =
-        x * 0.8;
+      arm.position.set(x, 1.55, 0.36);
+      arm.rotation.z = x * 0.8;
 
       arm.castShadow = true;
 
@@ -398,8 +267,7 @@ export class Kart {
         0.43
       );
 
-      leg.rotation.x =
-        Math.PI / 2;
+      leg.rotation.x = Math.PI / 2;
 
       leg.castShadow = true;
 
@@ -407,43 +275,33 @@ export class Kart {
     }
   }
 
-  // ============================================================
-  // LOAD CHARACTER MODEL
-  // ============================================================
+  // =========================================================
+  // LOAD GLB
+  // =========================================================
 
-  loadCharacterModel(
-    kart,
-    modelPath
-  ) {
-    console.log(
-      'LOAD CHARACTER:',
-      modelPath
-    );
+  loadCharacterModel(kart, modelPath) {
+    console.log('LOAD CHARACTER:', modelPath);
 
-    // MODEL SUDAH ADA DI CACHE
+    // CACHE
     if (modelCache.has(modelPath)) {
-      const sourceModel =
-        modelCache.get(modelPath);
+      const sourceModel = modelCache.get(modelPath);
 
-      const model =
-        this.prepareCharacter(
-          sourceModel.clone(true)
-        );
+      const model = this.prepareCharacter(
+        sourceModel.clone(true)
+      );
 
       kart.add(model);
-
       return;
     }
 
-    // MODEL SEDANG DIMUAT
+    // SEDANG LOADING
     if (modelLoading.has(modelPath)) {
       modelLoading
         .get(modelPath)
         .then((sourceModel) => {
-          const model =
-            this.prepareCharacter(
-              sourceModel.clone(true)
-            );
+          const model = this.prepareCharacter(
+            sourceModel.clone(true)
+          );
 
           kart.add(model);
         })
@@ -454,53 +312,50 @@ export class Kart {
       return;
     }
 
-    // MULAI LOAD
-    const loadingPromise =
-      new Promise(
-        (resolve, reject) => {
-          gltfLoader.load(
-            modelPath,
+    // LOAD BARU
+    const loadingPromise = new Promise(
+      (resolve, reject) => {
+        gltfLoader.load(
+          modelPath,
 
-            (gltf) => {
-              console.log(
-                'MODEL BERHASIL DIMUAT:',
-                modelPath
+          (gltf) => {
+            console.log(
+              'MODEL BERHASIL DIMUAT:',
+              modelPath
+            );
+
+            if (!gltf.scene) {
+              reject(
+                new Error(
+                  'GLB tidak mempunyai scene'
+                )
               );
 
-              if (!gltf.scene) {
-                reject(
-                  new Error(
-                    'GLB tidak mempunyai scene'
-                  )
-                );
-
-                return;
-              }
-
-              modelCache.set(
-                modelPath,
-                gltf.scene
-              );
-
-              resolve(
-                gltf.scene
-              );
-            },
-
-            undefined,
-
-            (error) => {
-              console.error(
-                'GAGAL LOAD MODEL:',
-                modelPath,
-                error
-              );
-
-              reject(error);
+              return;
             }
-          );
-        }
-      );
+
+            modelCache.set(
+              modelPath,
+              gltf.scene
+            );
+
+            resolve(gltf.scene);
+          },
+
+          undefined,
+
+          (error) => {
+            console.error(
+              'GAGAL LOAD MODEL:',
+              modelPath,
+              error
+            );
+
+            reject(error);
+          }
+        );
+      }
+    );
 
     modelLoading.set(
       modelPath,
@@ -509,29 +364,24 @@ export class Kart {
 
     loadingPromise
       .then((sourceModel) => {
-        const model =
-          this.prepareCharacter(
-            sourceModel.clone(true)
-          );
+        const model = this.prepareCharacter(
+          sourceModel.clone(true)
+        );
 
         kart.add(model);
 
-        modelLoading.delete(
-          modelPath
-        );
+        modelLoading.delete(modelPath);
       })
       .catch(() => {
-        modelLoading.delete(
-          modelPath
-        );
+        modelLoading.delete(modelPath);
 
         this.addGenericCharacter(kart);
       });
   }
 
-  // ============================================================
+  // =========================================================
   // PREPARE CHARACTER
-  // ============================================================
+  // =========================================================
 
   prepareCharacter(model) {
     model.visible = true;
@@ -544,15 +394,11 @@ export class Kart {
       }
     });
 
-    const box =
-      new THREE.Box3().setFromObject(
-        model
-      );
+    const box = new THREE.Box3().setFromObject(model);
 
-    const size =
-      box.getSize(
-        new THREE.Vector3()
-      );
+    const size = box.getSize(
+      new THREE.Vector3()
+    );
 
     const targetHeight = 2.35;
 
@@ -560,65 +406,44 @@ export class Kart {
       const scale =
         targetHeight / size.y;
 
-      model.scale.setScalar(
-        scale
-      );
+      model.scale.setScalar(scale);
     }
 
     const scaledBox =
-      new THREE.Box3().setFromObject(
-        model
-      );
+      new THREE.Box3().setFromObject(model);
 
     const center =
       scaledBox.getCenter(
         new THREE.Vector3()
       );
 
-    model.position.x -=
-      center.x;
-
-    model.position.z -=
-      center.z;
+    model.position.x -= center.x;
+    model.position.z -= center.z;
 
     const bottomBox =
-      new THREE.Box3().setFromObject(
-        model
-      );
+      new THREE.Box3().setFromObject(model);
 
-    model.position.y -=
-      bottomBox.min.y;
+    model.position.y -= bottomBox.min.y;
 
     model.position.y = 0.95;
-
     model.position.z = -0.35;
 
-    model.rotation.set(
-      0,
-      0,
-      0
-    );
+    model.rotation.set(0, 0, 0);
 
     return model;
   }
 
-  // ============================================================
+  // =========================================================
   // RESET
-  // ============================================================
+  // =========================================================
 
-  reset(
-    position,
-    heading
-  ) {
-    this.mesh.position.copy(
-      position
-    );
+  reset(position, heading) {
+    this.mesh.position.copy(position);
+
+    this.heading = heading;
 
     this.mesh.rotation.y =
-      heading;
-
-    this.heading =
-      heading;
+      this.heading;
 
     this.speed = 0;
 
@@ -633,58 +458,66 @@ export class Kart {
     this.boost = 100;
   }
 
-  // ============================================================
-  // PLAYER CONTROL
-  // ============================================================
+  // =========================================================
+  // PLAYER
+  // =========================================================
 
-  updatePlayer(
-    dt,
-    input,
-    track
-  ) {
+  updatePlayer(dt, input, track) {
     const forward =
-      input.keys.has('KeyW') ||
-      input.keys.has('ArrowUp') ||
-      input.keys.has('w') ||
-      input.keys.has('arrowup');
+      input.down(
+        'KeyW',
+        'ArrowUp',
+        'w',
+        'arrowup'
+      );
 
     const backward =
-      input.keys.has('KeyS') ||
-      input.keys.has('ArrowDown') ||
-      input.keys.has('s') ||
-      input.keys.has('arrowdown');
+      input.down(
+        'KeyS',
+        'ArrowDown',
+        's',
+        'arrowdown'
+      );
 
     const left =
-      input.keys.has('KeyA') ||
-      input.keys.has('ArrowLeft') ||
-      input.keys.has('a') ||
-      input.keys.has('arrowleft');
+      input.down(
+        'KeyA',
+        'ArrowLeft',
+        'a',
+        'arrowleft'
+      );
 
     const right =
-      input.keys.has('KeyD') ||
-      input.keys.has('ArrowRight') ||
-      input.keys.has('d') ||
-      input.keys.has('arrowright');
+      input.down(
+        'KeyD',
+        'ArrowRight',
+        'd',
+        'arrowright'
+      );
 
     const boosting =
-      (
-        input.keys.has('ShiftLeft') ||
-        input.keys.has('ShiftRight') ||
-        input.keys.has('Space') ||
-        input.keys.has('shift') ||
-        input.keys.has(' ')
+      input.down(
+        'ShiftLeft',
+        'ShiftRight',
+        'Space',
+        'shift'
       ) &&
       this.boost > 0 &&
       this.speed > 2;
 
-    // MAJU
+    // =======================================================
+    // GAS
+    // =======================================================
+
     if (forward) {
       this.speed +=
-        this.acceleration *
-        dt;
+        this.acceleration * dt;
     }
 
+    // =======================================================
     // REM / MUNDUR
+    // =======================================================
+
     if (backward) {
       if (this.speed > 0) {
         this.speed -=
@@ -699,11 +532,11 @@ export class Kart {
       }
     }
 
+    // =======================================================
     // FRICTION
-    if (
-      !forward &&
-      !backward
-    ) {
+    // =======================================================
+
+    if (!forward && !backward) {
       this.speed *=
         Math.pow(
           0.985,
@@ -711,13 +544,15 @@ export class Kart {
         );
     }
 
+    // =======================================================
     // BOOST
+    // =======================================================
+
     const topSpeed =
       this.maxSpeed *
       (
         boosting
-          ? 1.65 *
-            this.boostPower
+          ? 1.65 * this.boostPower
           : 1
       );
 
@@ -738,7 +573,7 @@ export class Kart {
         Math.min(
           100,
           this.boost +
-            8 * dt
+          8 * dt
         );
     }
 
@@ -749,20 +584,18 @@ export class Kart {
         topSpeed
       );
 
-    // ==========================================================
+    // =======================================================
     // STEERING
-    // ==========================================================
+    // =======================================================
 
     let steer = 0;
 
-    // A / PANAH KIRI
     if (left) {
-      steer -= 1;
+      steer = -1;
     }
 
-    // D / PANAH KANAN
     if (right) {
-      steer += 1;
+      steer = 1;
     }
 
     const steeringStrength =
@@ -784,33 +617,22 @@ export class Kart {
         );
     }
 
-    this.move(
-      dt,
-      track
-    );
+    this.move(dt, track);
   }
 
-  // ============================================================
+  // =========================================================
   // AI
-  // ============================================================
+  // =========================================================
 
-  updateAI(
-    dt,
-    track,
-    target
-  ) {
+  updateAI(dt, track, target) {
     if (this.finished) {
       return;
     }
 
-    const targetPoint =
-      target.clone();
-
     const direction =
-      targetPoint
-        .sub(
-          this.mesh.position
-        )
+      target
+        .clone()
+        .sub(this.mesh.position)
         .normalize();
 
     const desiredHeading =
@@ -823,18 +645,12 @@ export class Kart {
       desiredHeading -
       this.heading;
 
-    while (
-      difference > Math.PI
-    ) {
-      difference -=
-        Math.PI * 2;
+    while (difference > Math.PI) {
+      difference -= Math.PI * 2;
     }
 
-    while (
-      difference < -Math.PI
-    ) {
-      difference +=
-        Math.PI * 2;
+    while (difference < -Math.PI) {
+      difference += Math.PI * 2;
     }
 
     this.heading +=
@@ -845,57 +661,46 @@ export class Kart {
       );
 
     this.speed +=
-      this.acceleration *
-      dt;
+      this.acceleration * dt;
 
     this.speed =
       Math.min(
         this.speed,
-        this.maxSpeed *
-          0.82
+        this.maxSpeed * 0.82
       );
 
-    this.move(
-      dt,
-      track
-    );
+    this.move(dt, track);
   }
 
-  // ============================================================
+  // =========================================================
   // MOVEMENT
-  // ============================================================
+  // =========================================================
 
-  move(
-    dt,
-    track
-  ) {
+  move(dt, track) {
     const forward =
       new THREE.Vector3(
-        Math.sin(
-          this.heading
-        ),
+        Math.sin(this.heading),
         0,
-        Math.cos(
-          this.heading
-        )
+        Math.cos(this.heading)
       );
 
-    this.mesh.position
-      .addScaledVector(
-        forward,
-        this.speed * dt
-      );
+    this.mesh.position.addScaledVector(
+      forward,
+      this.speed * dt
+    );
 
     const nearest =
       track.nearest(
         this.mesh.position
       );
 
+    // =======================================================
     // KELUAR JALUR
+    // =======================================================
+
     if (
       nearest.distance >
-      track.spec.width *
-        0.52
+      track.spec.width * 0.52
     ) {
       const tangent =
         track.curve.getTangentAt(
@@ -937,8 +742,7 @@ export class Kart {
           safe
         );
 
-      this.speed *=
-        0.48;
+      this.speed *= 0.48;
 
       this.heading +=
         Math.sign(
@@ -947,33 +751,41 @@ export class Kart {
         0.12;
     }
 
+    // =======================================================
     // TERLALU JAUH
+    // =======================================================
+
     if (
       nearest.distance >
-      track.spec.width *
-        1.1
+      track.spec.width * 1.1
     ) {
       this.mesh.position.lerp(
         track.points[
           nearest.index
         ],
-        dt * 1.8
+        Math.min(
+          dt * 1.8,
+          1
+        )
       );
 
-      this.speed *=
-        0.75;
+      this.speed *= 0.75;
     }
 
-    // ROTASI KART
+    // =======================================================
+    // ROTASI
+    // =======================================================
+
     this.mesh.rotation.y =
       this.heading;
 
+    // =======================================================
     // RODA
+    // =======================================================
+
     this.mesh.traverse(
       (object) => {
-        if (
-          object.userData.wheel
-        ) {
+        if (object.userData.wheel) {
           object.rotation.y -=
             this.speed *
             dt *
@@ -982,28 +794,32 @@ export class Kart {
       }
     );
 
+    // =======================================================
     // PROGRESS
+    // =======================================================
+
     this.previousProgress =
       this.progress;
 
     this.progress =
       nearest.progress;
 
+    // =======================================================
     // LAP
+    // =======================================================
+
     if (
-      this.previousProgress >
-        0.88 &&
-      this.progress <
-        0.12 &&
+      this.previousProgress > 0.88 &&
+      this.progress < 0.12 &&
       this.speed > 2
     ) {
       this.lap++;
     }
   }
 
-  // ============================================================
+  // =========================================================
   // SCORE
-  // ============================================================
+  // =========================================================
 
   score() {
     return this.finished
@@ -1012,4 +828,3 @@ export class Kart {
         this.progress;
   }
 }
-```
