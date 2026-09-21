@@ -7,6 +7,7 @@ export const characters = [
     avatar: '🇮🇩',
     kart: 'Garuda Merah Putih',
     model: './wowok.glb',
+    previewModel: './wowok berdiri.glb',
     color: 0xe63946,
     speed: 1,
     acceleration: 1,
