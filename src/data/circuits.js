@@ -1,4 +1,12 @@
-const makeCircuit = (id, name, location, laps, width, points, theme) => ({
+const makeCircuit = (
+  id,
+  name,
+  location,
+  laps,
+  width,
+  points,
+  theme
+) => ({
   id,
   name,
   location,
@@ -9,6 +17,7 @@ const makeCircuit = (id, name, location, laps, width, points, theme) => ({
 });
 
 export const circuits = [
+  // Bali Circuit — lintasan oval tropis dengan tikungan panjang
   makeCircuit(
     'bali-circuit',
     'Bali Circuit',
@@ -16,13 +25,23 @@ export const circuits = [
     3,
     12,
     [
-      [-36,0,-8],[-27,0,-27],[-4,0,-34],[23,0,-28],
-      [38,0,-8],[34,0,13],[17,0,28],[-8,0,31],
-      [-29,0,20],[-40,0,5]
+      [-52, 0, -8],
+      [-44, 0, -30],
+      [-20, 0, -42],
+      [10, 0, -40],
+      [38, 0, -27],
+      [52, 0, -5],
+      [48, 0, 18],
+      [30, 0, 36],
+      [2, 0, 43],
+      [-27, 0, 36],
+      [-48, 0, 19],
+      [-56, 0, 4]
     ],
     'bali'
   ),
 
+  // Nusantara Ring — lebih berliku dengan banyak perubahan arah
   makeCircuit(
     'nusantara-ring',
     'Nusantara Ring',
@@ -30,13 +49,24 @@ export const circuits = [
     3,
     11,
     [
-      [-45,0,-2],[-38,0,-22],[-20,0,-35],[7,0,-40],
-      [31,0,-29],[45,0,-8],[42,0,14],[24,0,32],
-      [-3,0,39],[-29,0,29],[-46,0,13],[-51,0,4]
+      [-58, 0, 2],
+      [-52, 0, -22],
+      [-34, 0, -39],
+      [-8, 0, -48],
+      [20, 0, -45],
+      [45, 0, -30],
+      [58, 0, -8],
+      [52, 0, 14],
+      [35, 0, 34],
+      [8, 0, 46],
+      [-20, 0, 42],
+      [-43, 0, 29],
+      [-57, 0, 12]
     ],
     'forest'
   ),
 
+  // Garuda Speedway — sirkuit cepat dengan bagian lurus panjang
   makeCircuit(
     'garuda-speedway',
     'Garuda Speedway',
@@ -44,13 +74,24 @@ export const circuits = [
     3,
     13,
     [
-      [-48,0,-18],[-28,0,-31],[2,0,-32],[29,0,-23],
-      [49,0,-8],[50,0,10],[35,0,25],[8,0,31],
-      [-18,0,28],[-42,0,16],[-51,0,0]
+      [-62, 0, -24],
+      [-35, 0, -39],
+      [0, 0, -42],
+      [35, 0, -36],
+      [60, 0, -20],
+      [65, 0, 2],
+      [57, 0, 24],
+      [35, 0, 39],
+      [3, 0, 43],
+      [-30, 0, 37],
+      [-55, 0, 24],
+      [-66, 0, 5],
+      [-66, 0, -10]
     ],
     'city'
   ),
 
+  // Merapi Mountain — jalur pegunungan yang sempit dan berkelok
   makeCircuit(
     'merapi-mountain',
     'Merapi Mountain',
@@ -58,13 +99,25 @@ export const circuits = [
     3,
     10,
     [
-      [-40,0,4],[-34,0,-18],[-18,0,-31],[5,0,-38],
-      [26,0,-29],[38,0,-12],[30,0,5],[15,0,19],
-      [0,0,34],[-24,0,29],[-43,0,17],[-48,0,8]
+      [-52, 0, 8],
+      [-47, 0, -16],
+      [-32, 0, -36],
+      [-8, 0, -47],
+      [18, 0, -43],
+      [39, 0, -29],
+      [49, 0, -8],
+      [43, 0, 12],
+      [29, 0, 26],
+      [12, 0, 37],
+      [-8, 0, 48],
+      [-31, 0, 42],
+      [-47, 0, 27],
+      [-56, 0, 17]
     ],
     'mountain'
   ),
 
+  // Raja Ampat Coast — lintasan lebar dengan bentuk seperti garis pantai
   makeCircuit(
     'raja-ampat-coast',
     'Raja Ampat Coast',
@@ -72,9 +125,19 @@ export const circuits = [
     3,
     12,
     [
-      [-46,0,-6],[-35,0,-28],[-9,0,-39],[18,0,-35],
-      [41,0,-20],[48,0,1],[37,0,20],[12,0,36],
-      [-14,0,34],[-35,0,21],[-50,0,8]
+      [-58, 0, -5],
+      [-48, 0, -28],
+      [-25, 0, -43],
+      [3, 0, -48],
+      [30, 0, -39],
+      [52, 0, -22],
+      [61, 0, 0],
+      [53, 0, 22],
+      [32, 0, 39],
+      [5, 0, 48],
+      [-23, 0, 43],
+      [-45, 0, 29],
+      [-59, 0, 12]
     ],
     'island'
   )
