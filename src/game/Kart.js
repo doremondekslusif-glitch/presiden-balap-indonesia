@@ -682,10 +682,15 @@ export class Kart {
     this.speed +=
       this.acceleration * dt;
 
+    const raceFactor =
+      this.aiRaceFactor ?? 1;
+
     this.speed =
       Math.min(
         this.speed,
-        this.maxSpeed * 0.82
+        this.maxSpeed *
+          0.94 *
+          raceFactor
       );
 
     this.move(dt, track);
