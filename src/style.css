@@ -488,3 +488,107 @@ button:hover {
     overflow: visible;
   }
 }
+
+
+/* Circuit selection */
+
+.circuit-panel {
+  width: min(820px, 94vw);
+  max-height: 90vh;
+  padding: 28px;
+  background: linear-gradient(145deg, #092447f7, #061423f7);
+  border: 1px solid #f5c541;
+  box-shadow: 0 16px 60px #000;
+  overflow: auto;
+}
+
+.circuit-header {
+  text-align: center;
+}
+
+.circuit-header h2 {
+  margin: 8px 0;
+  font-size: 46px;
+}
+
+.circuit-header p:last-child {
+  color: #9ab7d0;
+  margin: 0;
+}
+
+.circuit-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.circuit-card {
+  border: 1px solid #416b92;
+  background: #061a2d;
+  cursor: pointer;
+  transition: border-color .15s, transform .15s, background .15s;
+  overflow: hidden;
+}
+
+.circuit-card:hover {
+  transform: translateY(-3px);
+  border-color: #f5c541;
+}
+
+.circuit-card.selected {
+  border-color: #f5c541;
+  background: #173b58;
+}
+
+.circuit-preview {
+  padding: 10px;
+  background: #04121f;
+  border-bottom: 1px solid #315274;
+}
+
+.circuit-preview svg {
+  display: block;
+  width: 100%;
+  height: 125px;
+}
+
+.circuit-preview polyline {
+  fill: none;
+  stroke: #f5c541;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.circuit-info {
+  padding: 14px;
+  text-align: left;
+}
+
+.circuit-info b {
+  display: block;
+  color: #f5c541;
+  font-size: 18px;
+}
+
+.circuit-info span {
+  display: block;
+  color: #9ab7d0;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.circuit-panel > .secondary {
+  width: 100%;
+}
+
+@media (max-width: 800px) {
+  .circuit-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .circuit-preview svg {
+    height: 100px;
+  }
+}
