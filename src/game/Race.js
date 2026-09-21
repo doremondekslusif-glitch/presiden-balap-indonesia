@@ -233,7 +233,7 @@ export class Race {
           this.input.down('KeyH', 'h');
 
         if (hornDown && !this.hornWasDown) {
-          this.onHorn();
+          this.onHorn(player.character);
         }
 
         this.hornWasDown = hornDown;
